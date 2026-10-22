@@ -331,12 +331,61 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 3px 5px;
-      border: 1px solid var(--line);
-      background: var(--surface);
+      padding: 3px 0;
     }
 
-    .color-palette[hidden] { display: none; }
+    .creation-style-controls {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      background: #edf3f1;
+      border: 1px solid var(--line);
+    }
+    .creation-style-controls h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .creation-style-context {
+      margin: -5px 0 0;
+      color: var(--ink-soft);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .creation-style-field {
+      display: grid;
+      gap: 5px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .creation-style-field select {
+      width: 100%;
+      min-height: 32px;
+      padding: 5px 7px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 3px;
+      font: inherit;
+      font-weight: 400;
+    }
+    .creation-style-colors {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .creation-style-colors .color-swatch { width: 28px; height: 28px; }
+    .creation-style-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+    .creation-style-arrow[hidden] { display: none; }
+    .creation-style-arrow input { accent-color: var(--hopf); }
 
     .connection-layer-controls {
       display: flex;
@@ -453,7 +502,15 @@
 
     .box-editor[hidden] { display: none; }
     .box-editor label { color: var(--ink-soft); font-size: 11px; }
-    .box-editor input {
+    .box-editor select {
+      min-height: 32px;
+      padding: 5px 7px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 3px;
+    }
+    .box-editor input:not([type="checkbox"]) {
       width: 132px;
       min-width: 110px;
       min-height: 32px;
@@ -600,7 +657,7 @@
 
     .wire-line {
       stroke: var(--connection-color, #171b1c);
-      stroke-width: 2.2;
+      stroke-width: 1.32;
       stroke-linecap: round;
       vector-effect: non-scaling-stroke;
       pointer-events: none;
@@ -609,8 +666,18 @@
     .wire-curve { fill: none; }
     .wire-line.is-selected {
       stroke: var(--connection-color, #171b1c);
-      stroke-width: 3.2;
-      filter: drop-shadow(0 0 2px var(--focus));
+      filter: drop-shadow(0 0 3px rgb(200 63 76 / 90%)) drop-shadow(0 0 1px rgb(200 63 76 / 75%));
+    }
+
+    .wire-selection-highlight {
+      fill: none;
+      stroke: var(--focus);
+      stroke-width: 8px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.55;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
     }
 
     .wire-underlay {
@@ -637,6 +704,7 @@
     .wire-preview {
       stroke: #007d72;
       stroke-dasharray: 5 5;
+      stroke-width: 2.2;
       opacity: 0.75;
       pointer-events: none;
     }
@@ -660,7 +728,7 @@
 
     .diagram-box.is-selected {
       fill: #fff;
-      stroke-width: 3;
+      filter: drop-shadow(0 0 4px rgb(200 63 76 / 90%)) drop-shadow(0 0 1px rgb(200 63 76 / 75%));
     }
 
     .diagram-circle {
@@ -672,7 +740,7 @@
     }
 
     .diagram-circle.is-selected {
-      stroke-width: 3;
+      filter: drop-shadow(0 0 2px var(--focus));
     }
 
     .group-selection-node {
@@ -963,10 +1031,47 @@
         </div>
       </section>
 
+      <section class="menu-group creation-style-controls" aria-labelledby="creation-style-heading">
+        <h3 id="creation-style-heading">Item style</h3>
+        <p class="creation-style-context" id="creation-style-context" aria-live="polite">Defaults for new strands, boxes, and circles</p>
+        <label class="creation-style-field" for="stroke-style">
+          Line style
+          <select id="stroke-style" aria-label="Item line style">
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="dashed">Dashed</option>
+          </select>
+        </label>
+        <label class="creation-style-field" for="stroke-width">
+          Thickness
+          <select id="stroke-width" aria-label="Item thickness">
+            <option value="0.4">0.4 pt</option>
+            <option value="0.8">0.8 pt</option>
+            <option value="1.2" selected>1.2 pt</option>
+            <option value="2">2 pt</option>
+            <option value="3">3 pt</option>
+          </select>
+        </label>
+        <div class="creation-style-field">
+          <span>Colour</span>
+          <div class="color-palette creation-style-colors" id="color-palette" role="group" aria-label="Item colour">
+            <button class="color-swatch" type="button" data-color="black" style="--swatch-color:#171b1c" aria-label="Black" title="Black" aria-pressed="true"></button>
+            <button class="color-swatch" type="button" data-color="grey" style="--swatch-color:#7a8586" aria-label="Grey" title="Grey" aria-pressed="false"></button>
+            <button class="color-swatch" type="button" data-color="green" style="--swatch-color:#007d72" aria-label="Green" title="Green" aria-pressed="false"></button>
+            <button class="color-swatch" type="button" data-color="blue" style="--swatch-color:#3477a8" aria-label="Blue" title="Blue" aria-pressed="false"></button>
+            <button class="color-swatch" type="button" data-color="orange" style="--swatch-color:#cf7622" aria-label="Orange" title="Orange" aria-pressed="false"></button>
+          </div>
+        </div>
+        <label class="creation-style-arrow" id="stroke-arrow-control" for="stroke-arrow">
+          <input id="stroke-arrow" type="checkbox">
+          Arrows
+        </label>
+      </section>
+
       <div class="active-tool" id="active-tool" data-category="">
         <span class="field-label">Current mode</span>
         <span class="active-label" id="active-label">Selection mode</span>
-        <p class="active-instructions" id="active-instructions">Click empty tiles to place structural nodes. Draw straight lines by dragging between nodes; on touchscreens, double-tap, hold, and drag. Click geometric shapes to select them and change their appearance.</p>
+        <p class="active-instructions" id="active-instructions">Click empty tiles to place structural nodes. Draw straight lines by dragging between nodes; on touchscreens, double-tap, hold, and drag. Select geometric shapes to edit their labels or move them.</p>
       </div>
       <p class="rail-footer">Read diagrams bottom to top</p>
     </aside>
@@ -1024,13 +1129,6 @@
           <div class="box-editor" id="text-node-editor" hidden>
             <label for="text-node-label">Node LaTeX</label>
             <input id="text-node-label" type="text" maxlength="256">
-          </div>
-          <div class="color-palette" id="color-palette" role="group" aria-label="Selected item color" hidden>
-            <button class="color-swatch" type="button" data-color="black" style="--swatch-color:#171b1c" aria-label="Black" title="Black" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="grey" style="--swatch-color:#7a8586" aria-label="Grey" title="Grey" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="green" style="--swatch-color:#007d72" aria-label="Green" title="Green" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="blue" style="--swatch-color:#3477a8" aria-label="Blue" title="Blue" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="orange" style="--swatch-color:#cf7622" aria-label="Orange" title="Orange" aria-pressed="false"></button>
           </div>
           <div class="connection-layer-controls" id="connection-layer-controls" role="group" aria-label="Connection crossing order" hidden>
             <button class="layer-button" id="connection-up-button" type="button" aria-label="Raise connection to front" title="Raise above all other raised connections" aria-pressed="false">
@@ -1134,7 +1232,6 @@
 \usepackage{amsmath,amssymb}
 \usepackage{xcolor}
 \usepackage{tikz}
-
 % Editor palette colors: schwarz=black, grau=gray!60, gruen=green!50!black,
 % blau=blue!70!black, and orange=orange!85!black.
 \newcommand{\schwarz}{black}
@@ -1168,153 +1265,135 @@
   \endgroup
 }
 
-% \dMult[<target offset|center>]{left x}{source y}{source span}{target height}{color}
-% Central-source multiplication; target offset defaults to "center".
-\newcommand{\dMult}[6][center]{%
-  \diagramDrawMult{#1}{line width=2pt}{#2}{#3}{#4}{#5}{#6}%
+% Multiplication commands retain their target-offset option and accept TikZ
+% stroke settings as a second optional argument; their arrows are not enabled.
+\makeatletter
+\newcommand{\dMult}[1][center]{\diagramMultWithStyle{#1}}
+\newcommand{\dLMult}[1][0]{\diagramLMultWithStyle{#1}}
+\newcommand{\dRMult}[1][1]{\diagramRMultWithStyle{#1}}
+\newcommand{\dMultO}[1][center]{\diagramMultUnderlayWithStyle{#1}}
+\newcommand{\dLMultO}[1][0]{\diagramLMultUnderlayWithStyle{#1}}
+\newcommand{\dRMultO}[1][1]{\diagramRMultUnderlayWithStyle{#1}}
+\def\diagramMultWithStyle#1{\@ifnextchar[{\diagramMultWithOptions{#1}}{\diagramMultWithOptions{#1}[line width=1.2pt]}}
+\def\diagramMultWithOptions#1[#2]#3#4#5#6#7{\diagramDrawMult{#1}{#2}{#3}{#4}{#5}{#6}{#7}}
+\def\diagramLMultWithStyle#1{\@ifnextchar[{\diagramLMultWithOptions{#1}}{\diagramLMultWithOptions{#1}[line width=1.2pt]}}
+\def\diagramLMultWithOptions#1[#2]#3#4#5#6#7{%
+  \draw[#2,color=#7]
+    (#3,#4) -- (#3,#4 + #6 * 0.5)
+    -- (#3 + #5 * 0.75,#4 + #6 * 0.5)
+    .. controls (#3 + #5,#4 + #6 * 0.5) .. (#3 + #5,#4 + #6 * 0.2)
+    -- (#3 + #5,#4);
+  \draw[#2,color=#7]
+    (#3 + #1,#4 + #6 * 0.5) -- (#3 + #1,#4 + #6);
 }
+\def\diagramRMultWithStyle#1{\@ifnextchar[{\diagramRMultWithOptions{#1}}{\diagramRMultWithOptions{#1}[line width=1.2pt]}}
+\def\diagramRMultWithOptions#1[#2]#3#4#5#6#7{%
+  \draw[#2,color=#7]
+    (#3,#4) -- (#3,#4 + #6 * 0.2)
+    .. controls (#3,#4 + #6 * 0.5) .. (#3 + #5 * 0.25,#4 + #6 * 0.5)
+    -- (#3 + #5,#4 + #6 * 0.5)
+    -- (#3 + #5,#4);
+  \draw[#2,color=#7]
+    (#3 + #1,#4 + #6 * 0.5) -- (#3 + #1,#4 + #6);
+}
+\def\diagramMultUnderlayWithStyle#1{\@ifnextchar[{\diagramMultUnderlayWithOptions{#1}}{\diagramMultUnderlayWithOptions{#1}[line width=1.2pt]}}
+\def\diagramMultUnderlayWithOptions#1[#2]#3#4#5#6#7{%
+  \diagramDrawMult{#1}{line width=4.5pt,shorten <=0.12cm,shorten >=0.12cm}{#3}{#4}{#5}{#6}{white}%
+  \diagramMultWithOptions{#1}[#2]{#3}{#4}{#5}{#6}{#7}%
+}
+\def\diagramLMultUnderlayWithStyle#1{\@ifnextchar[{\diagramLMultUnderlayWithOptions{#1}}{\diagramLMultUnderlayWithOptions{#1}[line width=1.2pt]}}
+\def\diagramLMultUnderlayWithOptions#1[#2]#3#4#5#6#7{%
+  \diagramLMultWithOptions{#1}[line width=4.5pt,shorten <=0.12cm,shorten >=0.12cm]{#3}{#4}{#5}{#6}{white}%
+  \diagramLMultWithOptions{#1}[#2]{#3}{#4}{#5}{#6}{#7}%
+}
+\def\diagramRMultUnderlayWithStyle#1{\@ifnextchar[{\diagramRMultUnderlayWithOptions{#1}}{\diagramRMultUnderlayWithOptions{#1}[line width=1.2pt]}}
+\def\diagramRMultUnderlayWithOptions#1[#2]#3#4#5#6#7{%
+  \diagramRMultWithOptions{#1}[line width=4.5pt,shorten <=0.12cm,shorten >=0.12cm]{#3}{#4}{#5}{#6}{white}%
+  \diagramRMultWithOptions{#1}[#2]{#3}{#4}{#5}{#6}{#7}%
+}
+\makeatother
 
-% \dLMult[<target offset>]{left x}{source y}{source span}{target height}{color}
-% Left-source-aligned multiplication; target offset defaults to 0.
-\newcommand{\dLMult}[6][0]{%
-  \draw[line width=2pt,color=#6]
-    (#2,#3) -- (#2,#3 + #5 * 0.5)
-    -- (#2 + #4 * 0.75,#3 + #5 * 0.5)
-    .. controls (#2 + #4,#3 + #5 * 0.5) .. (#2 + #4,#3 + #5 * 0.2)
-    -- (#2 + #4,#3);
-  \draw[line width=2pt,color=#6]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-}
-
-% \dRMult[<target offset>]{left x}{source y}{source span}{target height}{color}
-% Right-source-aligned multiplication; target offset defaults to 1.
-\newcommand{\dRMult}[6][1]{%
-  \draw[line width=2pt,color=#6]
-    (#2,#3) -- (#2,#3 + #5 * 0.2)
-    .. controls (#2,#3 + #5 * 0.5) .. (#2 + #4 * 0.25,#3 + #5 * 0.5)
-    -- (#2 + #4,#3 + #5 * 0.5)
-    -- (#2 + #4,#3);
-  \draw[line width=2pt,color=#6]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-}
-
-% Multiplication O variants paint a 4.5pt white underlay, shortened by 0.12cm at both ends.
-\newcommand{\dMultO}[6][center]{%
-  \diagramDrawMult{#1}{line width=4.5pt,shorten <=0.12cm,shorten >=0.12cm}{#2}{#3}{#4}{#5}{white}%
-  \dMult[#1]{#2}{#3}{#4}{#5}{#6}%
-}
-\newcommand{\dLMultO}[6][0]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2,#3) -- (#2,#3 + #5 * 0.5)
-    -- (#2 + #4 * 0.75,#3 + #5 * 0.5)
-    .. controls (#2 + #4,#3 + #5 * 0.5) .. (#2 + #4,#3 + #5 * 0.2)
-    -- (#2 + #4,#3);
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-  \dLMult[#1]{#2}{#3}{#4}{#5}{#6}%
-}
-\newcommand{\dRMultO}[6][1]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2,#3) -- (#2,#3 + #5 * 0.2)
-    .. controls (#2,#3 + #5 * 0.5) .. (#2 + #4 * 0.25,#3 + #5 * 0.5)
-    -- (#2 + #4,#3 + #5 * 0.5)
-    -- (#2 + #4,#3);
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-  \dRMult[#1]{#2}{#3}{#4}{#5}{#6}%
-}
-
-% \dPairing{left x}{endpoint y}{span}{height}{color}{label}
+% \dPairing[<TikZ draw options>]{left x}{endpoint y}{span}{height}{color}{label}
 % Evaluation cap; the optional label is placed at its apex.
-\newcommand{\dPairing}[6]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) -- (#1,#2 + #4 - 1)
-    .. controls (#1,#2 + #4 - 0.5) .. (#1 + #3 * 0.48,#2 + #4 - 0.5)
-    -- (#1 + #3 * 0.52,#2 + #4 - 0.5)
-    .. controls (#1 + #3,#2 + #4 - 0.5) .. (#1 + #3,#2 + #4 - 1)
-    -- (#1 + #3,#2);
-  \if\relax\detokenize{#6}\relax
+\newcommand{\dPairing}[7][line width=1.2pt]{%
+  \draw[#1,color=#6]
+    (#2,#3) -- (#2,#3 + #5 - 1) arc (180:0:#4*0.5) (#2 + #4,#3 + #5 - 1)
+    -- (#2 + #4,#3);
+  \if\relax\detokenize{#7}\relax
   \else
-    \node at (#1 + #3 * 0.5,#2 + #4 - 0.5) {#6};
+    \node at (#2 + #4 * 0.5,#3 + #5 - 0.5) {#7};
   \fi
 }
 
 % \dCopairing has the same arguments as \dPairing and draws a coevaluation cup.
-\newcommand{\dCopairing}[6]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) -- (#1,#2 - #4 + 1)
-    .. controls (#1,#2 - #4 + 0.5) .. (#1 + #3 * 0.48,#2 - #4 + 0.5)
-    -- (#1 + #3 * 0.52,#2 - #4 + 0.5)
-    .. controls (#1 + #3,#2 - #4 + 0.5) .. (#1 + #3,#2 - #4 + 1)
-    -- (#1 + #3,#2);
-  \if\relax\detokenize{#6}\relax
+\newcommand{\dCopairing}[7][line width=1.2pt]{%
+  \draw[#1,color=#6]
+    (#2,#3) -- (#2,#3 - #5 + 1) arc (180:360:#4*0.5) (#2 + #4,#3 - #5 + 1)
+    -- (#2 + #4,#3);
+  \if\relax\detokenize{#7}\relax
   \else
-    \node at (#1 + #3 * 0.5,#2 - #4 + 0.5) {#6};
+    \node at (#2 + #4 * 0.5,#3 - #5 + 0.5) {#7};
   \fi
 }
 
 % Raised pairing/copaired variants use the same underlay convention.
-\newcommand{\dPairingO}[6]{%
+\newcommand{\dPairingO}[7][line width=1.2pt]{%
   \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#1,#2) -- (#1,#2 + #4 - 1)
-    .. controls (#1,#2 + #4 - 0.5) .. (#1 + #3 * 0.48,#2 + #4 - 0.5)
-    -- (#1 + #3 * 0.52,#2 + #4 - 0.5)
-    .. controls (#1 + #3,#2 + #4 - 0.5) .. (#1 + #3,#2 + #4 - 1)
-    -- (#1 + #3,#2);
-  \dPairing{#1}{#2}{#3}{#4}{#5}{#6}%
+    (#2,#3) -- (#2,#3 + #5 - 1) arc (180:0:#4*0.5) (#2 + #4,#3 + #5 - 1)
+    -- (#2 + #4,#3);
+  \dPairing[#1]{#2}{#3}{#4}{#5}{#6}{#7}%
 }
-\newcommand{\dCopairingO}[6]{%
+\newcommand{\dCopairingO}[7][line width=1.2pt]{%
   \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#1,#2) --
-    (#1,#2 - #4 + 1) .. controls (#1,#2 - #4 + 0.5) .. (#1 + #3 * 0.48,#2 - #4 + 0.5)
-    -- (#1 + #3 * 0.52,#2 - #4 + 0.5)
-    .. controls (#1 + #3,#2 - #4 + 0.5) .. (#1 + #3,#2 - #4 + 1)
-    -- (#1 + #3,#2);
-  \dCopairing{#1}{#2}{#3}{#4}{#5}{#6}%
+    (#2,#3) --
+    (#2,#3 - #5 + 1) arc (180:360:#4*0.5) (#2 + #4,#3 - #5 + 1)
+    -- (#2 + #4,#3);
+  \dCopairing[#1]{#2}{#3}{#4}{#5}{#6}{#7}%
 }
 
-% All connection strands use 2pt colored strokes and 4.5pt white underlays.
+% All connection strands use 1.2pt colored strokes and 4.5pt white underlays.
 % Most O variants shorten the underlay at both ends. Smooth O variants stay
 % unshortened so the white and colored Bezier paths share endpoints and align.
 % All use TikZ's default line caps and joins.
-% \dLine{x1}{y1}{x2}{y2}{color}: straight strand.
-\newcommand{\dLine}[5]{%
-  \draw[line width=2pt,color=#5] (#1,#2) -- (#3,#4);
+% Strand commands accept optional TikZ draw options before their coordinates,
+% such as \dLine[line width=1.2pt,dashed,<-,]{x1}{y1}{x2}{y2}{color}.
+\newcommand{\dLine}[6][line width=1.2pt]{%
+  \draw[#1,color=#6] (#2,#3) -- (#4,#5);
 }
-\newcommand{\dLineO}[5]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#1,#2) -- (#3,#4);
-  \dLine{#1}{#2}{#3}{#4}{#5}%
-}
-
-% \dCurve{x1}{y1}{c1x}{c1y}{c2x}{c2y}{x2}{y2}{color}: cubic Bézier.
-\newcommand{\dCurve}[9]{%
-  \draw[line width=2pt,color=#9] (#1,#2) .. controls (#3,#4) and (#5,#6) .. (#7,#8);
-}
-\newcommand{\dCurveO}[9]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#1,#2) .. controls (#3,#4) and (#5,#6) .. (#7,#8);
-  \dCurve{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}{#9}%
+\newcommand{\dLineO}[6][line width=1.2pt]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#2,#3) -- (#4,#5);
+  \dLine[#1]{#2}{#3}{#4}{#5}{#6}%
 }
 
-% \sLine{x1}{y1}{x2}{y2}{color}: cubic Bézier with vertical endpoint tangents.
-\newcommand{\sLine}[5]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) .. controls (#1,#2 * 0.45 + #4 * 0.55) and (#3,#2 * 0.55 + #4 * 0.45) .. (#3,#4);
+% \dCurve[<TikZ draw options>]{x1}{y1}{c1x}{c1y}{c2x}{c2y}{x2}{y2}: cubic Bézier.
+\newcommand{\dCurve}[9][line width=1.2pt]{%
+  \draw[#1] (#2,#3) .. controls (#4,#5) and (#6,#7) .. (#8,#9);
 }
-\newcommand{\sLineO}[5]{%
+\newcommand{\dCurveO}[9][line width=1.2pt]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#2,#3) .. controls (#4,#5) and (#6,#7) .. (#8,#9);
+  \dCurve[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}{#9}%
+}
+
+% \sLine[<TikZ draw options>]{x1}{y1}{x2}{y2}{color}: vertical endpoint tangents.
+\newcommand{\sLine}[6][line width=1.2pt]{%
+  \draw[#1,color=#6]
+    (#2,#3) .. controls (#2,#3 * 0.45 + #5 * 0.55) and (#4,#3 * 0.55 + #5 * 0.45) .. (#4,#5);
+}
+\newcommand{\sLineO}[6][line width=1.2pt]{%
   \draw[line width=4.5pt,color=white]
-    (#1,#2) .. controls (#1,#2 * 0.45 + #4 * 0.55) and (#3,#2 * 0.55 + #4 * 0.45) .. (#3,#4);
-  \sLine{#1}{#2}{#3}{#4}{#5}%
+    (#2,#3) .. controls (#2,#3 * 0.45 + #5 * 0.55) and (#4,#3 * 0.55 + #5 * 0.45) .. (#4,#5);
+  \sLine[#1]{#2}{#3}{#4}{#5}{#6}%
 }
 
 % \hLine{x1}{y1}{x2}{y2}{color}: cubic Bézier with horizontal endpoint tangents.
-\newcommand{\hLine}[5]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) .. controls (#1 * 0.45 + #3 * 0.55,#2) and (#1 * 0.55 + #3 * 0.45,#4) .. (#3,#4);
+\newcommand{\hLine}[6][line width=1.2pt]{%
+  \draw[#1,color=#6]
+    (#2,#3) .. controls (#2 * 0.45 + #4 * 0.55,#3) and (#2 * 0.55 + #4 * 0.45,#5) .. (#4,#5);
 }
-\newcommand{\hLineO}[5]{%
+\newcommand{\hLineO}[6][line width=1.2pt]{%
   \draw[line width=4.5pt,color=white]
-    (#1,#2) .. controls (#1 * 0.45 + #3 * 0.55,#2) and (#1 * 0.55 + #3 * 0.45,#4) .. (#3,#4);
-  \hLine{#1}{#2}{#3}{#4}{#5}%
+    (#2,#3) .. controls (#2 * 0.45 + #4 * 0.55,#3) and (#2 * 0.55 + #4 * 0.45,#5) .. (#4,#5);
+  \hLine[#1]{#2}{#3}{#4}{#5}{#6}%
 }
   </script>
   <script id="default-diagram-source" type="application/json">
@@ -1331,7 +1410,7 @@
       multiplication: { label: "Multiplication", symbol: "", category: "tensor" },
       text: { label: "Text node", symbol: "", category: "text" }
     };
-    const selectionModeInstructions = "Click empty tiles to place structural nodes. Draw straight lines by dragging between nodes; on touchscreens, double-tap, hold, and drag. Click geometric shapes to select them and change their appearance.";
+    const selectionModeInstructions = "Click empty tiles to place structural nodes. Draw straight lines by dragging between nodes; on touchscreens, double-tap, hold, and drag. Select geometric shapes to edit their labels or move them.";
     const multiplicationInstructions = "Click or tap two source nodes or shape ports on the same row, then click or tap a target above or below them whose horizontal position is between the sources.";
     const multiplicationSecondSourceInstructions = "Source 1 selected. Select a second source node or shape port on the same row.";
     const multiplicationTargetInstructions = "Two sources selected. Select a target node whose horizontal position is between the sources.";
@@ -1361,7 +1440,7 @@
      */
     /**
      * Ordinary connections have from/to endpoints; multiplications have two sources and one target.
-     * @typedef {{from: DiagramEndpoint, to: DiagramEndpoint, kind?: "evaluation" | "coevaluation" | "smooth-line" | "smooth-horizontal" | null, color?: string, layer?: string} | {kind: "multiplication", sources: [DiagramEndpoint, DiagramEndpoint], target: DiagramEndpoint, color?: string, layer?: string}} DiagramConnection
+     * @typedef {{from: DiagramEndpoint, to: DiagramEndpoint, kind?: "evaluation" | "coevaluation" | "smooth-line" | "smooth-horizontal" | null, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean} | {kind: "multiplication", sources: [DiagramEndpoint, DiagramEndpoint], target: DiagramEndpoint, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean}} DiagramConnection
      */
 
     // The startup diagram is loaded from the embedded, synchronized JSON source.
@@ -1376,9 +1455,9 @@
     const bulletColors = new Map();
     /** @type {DiagramConnection[]} */
     const connections = [];
-    /** @type {Array<{id: number, x: number, y: number, width: number, height: number, color?: string, text?: string}>} */
+    /** @type {Array<{id: number, x: number, y: number, width: number, height: number, color?: string, text?: string, lineStyle?: string, strokeWidth?: string}>} */
     const boxes = [];
-    /** @type {Array<{id: number, x: number, y: number, radius: number, color?: string, text?: string}>} */
+    /** @type {Array<{id: number, x: number, y: number, radius: number, color?: string, text?: string, lineStyle?: string, strokeWidth?: string}>} */
     const circles = [];
     let nextBoxId = 1;
     let nextCircleId = 1;
@@ -1440,6 +1519,11 @@
     const boxLabelInput = document.getElementById("box-label");
     const circleEditor = document.getElementById("circle-editor");
     const circleLabelInput = document.getElementById("circle-label");
+    const strokeStyleSelect = document.getElementById("stroke-style");
+    const strokeWidthSelect = document.getElementById("stroke-width");
+    const strokeArrowControl = document.getElementById("stroke-arrow-control");
+    const strokeArrowInput = document.getElementById("stroke-arrow");
+    const creationStyleContext = document.getElementById("creation-style-context");
     const textNodeButton = document.getElementById("text-node-button");
     const evaluationButton = document.getElementById("evaluation-button");
     const coevaluationButton = document.getElementById("coevaluation-button");
@@ -1452,8 +1536,8 @@
     const toolShortcuts = new Map();
     const textNodeEditor = document.getElementById("text-node-editor");
     const textNodeInput = document.getElementById("text-node-label");
-    const colorPalette = document.getElementById("color-palette");
     const colorSwatches = [...document.querySelectorAll(".color-swatch")];
+    const creationAppearance = { color: "black", lineStyle: "solid", strokeWidth: "1.2", arrow: false };
     const connectionLayerControls = document.getElementById("connection-layer-controls");
     const connectionUpButton = document.getElementById("connection-up-button");
     const connectionDownButton = document.getElementById("connection-down-button");
@@ -1859,7 +1943,7 @@
         const bottom = box.y + box.height;
         const inside = point.x >= box.x && point.x <= right && point.y >= box.y && point.y <= bottom;
         const edgeDistance = Math.min(Math.abs(point.x - box.x), Math.abs(point.x - right), Math.abs(point.y - box.y), Math.abs(point.y - bottom));
-        if (inside && edgeDistance > 0.25) return index;
+        if (inside && edgeDistance > 0.08) return index;
       }
       return null;
     }
@@ -2014,7 +2098,6 @@
       updateBoxEditor();
       updateCircleEditor();
       updateTextNodeEditor();
-      updateColorPalette();
       renderConnections();
       updateActions();
       announce("Circle selected; edit its LaTeX label or press Delete to remove it");
@@ -2038,6 +2121,72 @@
       }
     }
 
+    function selectedStyleTarget() {
+      const connection = connections[selectedConnectionIndex];
+      if (connection) {
+        return {
+          item: connection,
+          label: connection.kind === "multiplication" ? "multiplication" : "strand",
+          supportsArrow: connection.kind !== "multiplication"
+        };
+      }
+      const box = boxes[selectedBoxIndex];
+      if (box) return { item: box, label: "box", supportsArrow: false };
+      const circle = circles[selectedCircleIndex];
+      if (circle) return { item: circle, label: "circle", supportsArrow: false };
+      return null;
+    }
+
+    function updateItemStyleControls() {
+      const target = selectedStyleTarget();
+      const style = target?.item || creationAppearance;
+      strokeStyleSelect.value = style.lineStyle || "solid";
+      strokeWidthSelect.value = style.strokeWidth || "1.2";
+      strokeArrowInput.checked = target ? target.item.arrow === true : creationAppearance.arrow;
+      strokeArrowControl.hidden = target ? !target.supportsArrow : false;
+      creationStyleContext.textContent = target
+        ? `Editing selected ${target.label}`
+        : "Defaults for new strands, boxes, and circles";
+      colorSwatches.forEach((swatch) => {
+        swatch.setAttribute("aria-pressed", String(swatch.dataset.color === (style.color || "black")));
+      });
+    }
+
+    function applyStrokeControls() {
+      const target = selectedStyleTarget();
+      if (!target) {
+        creationAppearance.lineStyle = strokeStyleSelect.value;
+        creationAppearance.strokeWidth = strokeWidthSelect.value;
+        creationAppearance.arrow = strokeArrowInput.checked;
+        announce("Style for new strands, boxes, and circles updated");
+        return;
+      }
+
+      const { item } = target;
+      const lineStyle = strokeStyleSelect.value;
+      const strokeWidth = strokeWidthSelect.value;
+      const arrow = target.supportsArrow && strokeArrowInput.checked;
+      if (item.lineStyle === lineStyle && item.strokeWidth === strokeWidth &&
+        (!target.supportsArrow || item.arrow === arrow)) return;
+      snapshot();
+      item.lineStyle = lineStyle;
+      item.strokeWidth = strokeWidth;
+      if (target.supportsArrow) item.arrow = arrow;
+      announce(`Selected ${target.label} style updated`);
+      renderConnections();
+      updateActions();
+    }
+
+    function newItemAppearance(includeArrow = false) {
+      const appearance = {
+        color: creationAppearance.color,
+        lineStyle: creationAppearance.lineStyle,
+        strokeWidth: creationAppearance.strokeWidth
+      };
+      if (includeArrow) appearance.arrow = creationAppearance.arrow;
+      return appearance;
+    }
+
     function updateTextNodeEditor() {
       const isSelectedTextNode = selectedCellIndex !== null && cells[selectedCellIndex] === "text";
       textNodeEditor.hidden = !isSelectedTextNode;
@@ -2045,25 +2194,6 @@
         textNodeDraft = textNodeValues.get(selectedCellIndex) ?? "";
         textNodeInput.value = textNodeDraft;
       }
-    }
-
-    function updateColorPalette() {
-      const canEditColor = activeOperationKey !== "multiplication";
-      const hasConnection = canEditColor && selectedConnectionIndex !== null;
-      const hasBullet = canEditColor && selectedCellIndex !== null && cells[selectedCellIndex] === "bullet";
-      const hasBox = canEditColor && selectedBoxIndex !== null;
-      const hasCircle = canEditColor && selectedCircleIndex !== null;
-      colorPalette.hidden = !hasConnection && !hasBullet && !hasBox && !hasCircle;
-      const color = hasConnection
-        ? (connections[selectedConnectionIndex]?.color || "black")
-        : (hasBullet
-          ? (bulletColors.get(selectedCellIndex) || "black")
-          : (hasBox
-            ? (boxes[selectedBoxIndex]?.color || "black")
-            : (hasCircle ? (circles[selectedCircleIndex]?.color || "black") : "black")));
-      colorSwatches.forEach((swatch) => {
-        swatch.setAttribute("aria-pressed", String((hasConnection || hasBullet || hasBox || hasCircle) && swatch.dataset.color === color));
-      });
     }
 
     function updateConnectionLayerControls() {
@@ -2092,34 +2222,6 @@
       announce(layer === "up" ? "Connection raised above crossings" : "Connection lowered below crossings");
       renderConnections();
       updateActions();
-    }
-
-    function applyColorToSelection(color) {
-      if (!diagramColors[color] || activeOperationKey === "multiplication") return;
-      if (selectedConnectionIndex !== null) {
-        snapshot();
-        connections[selectedConnectionIndex].color = color;
-        announce(`${color[0].toUpperCase()}${color.slice(1)} connection color`);
-        renderConnections();
-        updateActions();
-      } else if (selectedCellIndex !== null && cells[selectedCellIndex] === "bullet") {
-        snapshot();
-        bulletColors.set(selectedCellIndex, color);
-        announce(`${color[0].toUpperCase()}${color.slice(1)} bullet color`);
-        renderGrid();
-      } else if (selectedBoxIndex !== null) {
-        snapshot();
-        boxes[selectedBoxIndex].color = color;
-        announce(`${color[0].toUpperCase()}${color.slice(1)} box boundary`);
-        renderConnections();
-        updateActions();
-      } else if (selectedCircleIndex !== null) {
-        snapshot();
-        circles[selectedCircleIndex].color = color;
-        announce(`${color[0].toUpperCase()}${color.slice(1)} circle boundary`);
-        renderConnections();
-        updateActions();
-      }
     }
 
     function commitBoxLabel() {
@@ -2382,7 +2484,7 @@
         });
     }
 
-    function latexForConnection(connection) {
+    function latexForConnectionCommand(connection) {
       const latexColor = diagramColors[connection.color || "black"].latex;
       const isRaised = connection.layer === "up";
       if (connection.kind === "multiplication") {
@@ -2392,23 +2494,24 @@
         const targetOffset = target.x - sources[0].x;
         const height = target.y - sources[0].y;
         const argumentsList = `{${latexNumber(sources[0].x)}}{${latexNumber(sources[0].y)}}{${latexNumber(width)}}{${latexNumber(height)}}{${latexColor}}`;
-        if (Math.abs(targetOffset) < 0.001) return `\\dLMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}]${argumentsList}`;
-        if (Math.abs(targetOffset - width) < 0.001) return `\\dRMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}]${argumentsList}`;
-        const offsetArgument = Math.abs(targetOffset - width * 0.5) < 0.001 ? "" : `[${latexNumber(targetOffset)}]`;
-        return `\\dMult${isRaised ? "O" : ""}${offsetArgument}${argumentsList}`;
+        const strokeOptions = latexStrokeOptions(connection, "1.2");
+        if (Math.abs(targetOffset) < 0.001) return `\\dLMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}][${strokeOptions}]${argumentsList}`;
+        if (Math.abs(targetOffset - width) < 0.001) return `\\dRMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}][${strokeOptions}]${argumentsList}`;
+        return `\\dMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}][${strokeOptions}]${argumentsList}`;
       }
 
       const start = latexPoint(connection.from);
       const end = latexPoint(connection.to);
+      const strokeOptions = latexStrokeOptions(connection, "1.2", true);
       if (!curvedConnectionTypes.has(connection.kind)) {
         const command = isRaised ? "dLineO" : "dLine";
-        return `\\${command}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
+        return `\\${command}[${strokeOptions}]{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
       }
 
       if (smoothConnectionTypes.has(connection.kind)) {
         const isVertical = connection.kind === "smooth-line";
         const command = isVertical ? "sLine" : "hLine";
-        return `\\${command}${isRaised ? "O" : ""}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
+        return `\\${command}${isRaised ? "O" : ""}[${strokeOptions}]{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
       }
 
       const isPairing = connection.kind === "evaluation";
@@ -2417,7 +2520,7 @@
         const span = Math.hypot(right.x - left.x, right.y - left.y);
         const height = Math.min(2.2, Math.max(0.8, span * 0.35)) + 0.5;
         const command = isPairing ? (isRaised ? "dPairingO" : "dPairing") : (isRaised ? "dCopairingO" : "dCopairing");
-        return `\\${command}{${latexNumber(left.x)}}{${latexNumber(left.y)}}{${latexNumber(right.x - left.x)}}{${latexNumber(height)}}{${latexColor}}{}`;
+        return `\\${command}[${strokeOptions}]{${latexNumber(left.x)}}{${latexNumber(left.y)}}{${latexNumber(right.x - left.x)}}{${latexNumber(height)}}{${latexColor}}{}`;
       }
 
       const direction = isPairing ? 1 : -1;
@@ -2425,7 +2528,18 @@
       const firstControl = { x: start.x, y: start.y + direction * depth };
       const secondControl = { x: end.x, y: end.y + direction * depth };
       const command = isRaised ? "dCurveO" : "dCurve";
-      return `\\${command}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(firstControl.x)}}{${latexNumber(firstControl.y)}}{${latexNumber(secondControl.x)}}{${latexNumber(secondControl.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
+      return `\\${command}[${latexStrokeOptions(connection, "1.2", true)},color=${latexColor}]{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(firstControl.x)}}{${latexNumber(firstControl.y)}}{${latexNumber(secondControl.x)}}{${latexNumber(secondControl.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}`;
+    }
+
+    function latexStrokeOptions(item, fallbackWidth, includeArrow = false) {
+      const options = [`line width=${item.strokeWidth || fallbackWidth}pt`];
+      if (item.lineStyle === "dotted" || item.lineStyle === "dashed") options.push(item.lineStyle);
+      if (includeArrow && item.arrow) options.push("<-");
+      return options.join(",");
+    }
+
+    function latexForConnection(connection) {
+      return latexForConnectionCommand(connection);
     }
 
     function latexForDiagram() {
@@ -2440,13 +2554,13 @@
         const lowerLeft = { x: box.x, y: rows - box.y - box.height };
         const upperRight = { x: box.x + box.width, y: rows - box.y };
         const latexColor = diagramColors[box.color || "black"].latex;
-        code.push(`  \\filldraw[draw=${latexColor},fill=white,line width=2pt] ${latexCoordinate(lowerLeft)} rectangle ${latexCoordinate(upperRight)};`);
+        code.push(`  \\filldraw[draw=${latexColor},fill=white,${latexStrokeOptions(box, "1.2")}] ${latexCoordinate(lowerLeft)} rectangle ${latexCoordinate(upperRight)};`);
       });
 
       circles.forEach((circle) => {
         const center = { x: circle.x, y: rows - circle.y };
         const latexColor = diagramColors[circle.color || "black"].latex;
-        code.push(`  \\filldraw[draw=${latexColor},fill=white,line width=2pt] ${latexCoordinate(center)} circle[radius=${latexNumber(circle.radius)}cm];`);
+        code.push(`  \\filldraw[draw=${latexColor},fill=white,${latexStrokeOptions(circle, "2")}] ${latexCoordinate(center)} circle[radius=${latexNumber(circle.radius)}cm];`);
         if (circle.text?.trim()) code.push(`  \\node[inner sep=2pt] at ${latexCoordinate(center)} {$${circle.text}$};`);
       });
 
@@ -2505,6 +2619,11 @@
       if (connection.layer !== "up") return;
       const underlay = element.cloneNode(false);
       underlay.setAttribute("class", "wire-underlay");
+      underlay.removeAttribute("marker-end");
+      underlay.removeAttribute("marker-start");
+      underlay.style.removeProperty("stroke-width");
+      underlay.style.removeProperty("stroke-dasharray");
+      underlay.style.removeProperty("--connection-color");
       wireLayer.append(underlay);
       const pathLength = underlay.getTotalLength();
       if (pathLength > 0) {
@@ -2517,14 +2636,60 @@
     function appendConnectionHitArea(element) {
       const hitArea = element.cloneNode(false);
       hitArea.setAttribute("class", "wire-hit-area");
+      hitArea.removeAttribute("marker-end");
+      hitArea.removeAttribute("marker-start");
+      hitArea.removeAttribute("stroke-dasharray");
+      hitArea.style.removeProperty("stroke-width");
+      hitArea.style.removeProperty("stroke-dasharray");
+      hitArea.style.removeProperty("--connection-color");
       wireLayer.append(hitArea);
+    }
+
+    function appendConnectionSelectionHighlight(element, isSelected) {
+      if (!isSelected) return;
+      const highlight = element.cloneNode(false);
+      highlight.setAttribute("class", "wire-selection-highlight");
+      highlight.removeAttribute("marker-end");
+      highlight.removeAttribute("marker-start");
+      highlight.removeAttribute("stroke-dasharray");
+      highlight.style.removeProperty("stroke-width");
+      highlight.style.removeProperty("stroke-dasharray");
+      highlight.style.removeProperty("--connection-color");
+      wireLayer.append(highlight);
+    }
+
+    function applyStrokeAppearance(element, item, fallbackWidth) {
+      const width = Number(item.strokeWidth || fallbackWidth);
+      element.style.strokeWidth = String(width * 1.1);
+      if (item.lineStyle === "dotted") {
+        element.style.strokeDasharray = `${Math.max(width * 0.7, 1)} ${Math.max(width * 2.5, 3)}`;
+      } else if (item.lineStyle === "dashed") {
+        element.style.strokeDasharray = `${Math.max(width * 3, 4)} ${Math.max(width * 2, 3)}`;
+      }
     }
 
     function renderConnections() {
       if (window.MathJax?.typesetClear) window.MathJax.typesetClear([grid]);
       wireLayer.replaceChildren();
+      const defs = document.createElementNS(wireLayer.namespaceURI, "defs");
+      const arrowMarker = document.createElementNS(wireLayer.namespaceURI, "marker");
+      arrowMarker.setAttribute("id", "connection-arrow");
+      arrowMarker.setAttribute("viewBox", "0 0 10 10");
+      arrowMarker.setAttribute("refX", "9");
+      arrowMarker.setAttribute("refY", "5");
+      arrowMarker.setAttribute("markerWidth", "6");
+      arrowMarker.setAttribute("markerHeight", "6");
+      arrowMarker.setAttribute("markerUnits", "strokeWidth");
+      arrowMarker.setAttribute("orient", "auto-start-reverse");
+      const arrowHead = document.createElementNS(wireLayer.namespaceURI, "path");
+      arrowHead.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+      arrowHead.setAttribute("fill", "context-stroke");
+      arrowMarker.append(arrowHead);
+      defs.append(arrowMarker);
+      wireLayer.append(defs);
       grid.querySelectorAll(".box-label, .circle-label").forEach((label) => label.remove());
-      boxes.forEach(({ x, y, width, height, text, color }, index) => {
+      boxes.forEach((box, index) => {
+        const { x, y, width, height, text, color } = box;
         const rectangle = document.createElementNS(wireLayer.namespaceURI, "rect");
         rectangle.classList.add("diagram-box");
         if (index === selectedBoxIndex) rectangle.classList.add("is-selected");
@@ -2533,6 +2698,7 @@
         rectangle.setAttribute("width", String(width));
         rectangle.setAttribute("height", String(height));
         rectangle.style.stroke = diagramColors[color || "black"].css;
+        applyStrokeAppearance(rectangle, box, 1.2);
         wireLayer.append(rectangle);
 
         const label = index === selectedBoxIndex && boxLabelDraft !== null ? boxLabelDraft : (text || "");
@@ -2557,6 +2723,7 @@
         element.setAttribute("cy", String(circle.y));
         element.setAttribute("r", String(circle.radius));
         element.style.setProperty("--circle-color", diagramColors[circle.color || "black"].css);
+        applyStrokeAppearance(element, circle, 2);
         wireLayer.append(element);
 
         const label = index === selectedCircleIndex && circleLabelDraft !== null ? circleLabelDraft : (circle.text || "");
@@ -2619,11 +2786,14 @@
         if (kind === "multiplication") {
           const path = document.createElementNS(wireLayer.namespaceURI, "path");
           path.classList.add("wire-line", "wire-curve", "wire-multiplication");
-          if (index === selectedConnectionIndex) path.classList.add("is-selected");
+          const isSelected = index === selectedConnectionIndex;
+          if (isSelected) path.classList.add("is-selected");
           path.dataset.connectionIndex = String(index);
           path.setAttribute("d", multiplicationPath(endpointFor(sources[0]), endpointFor(sources[1]), endpointFor(target)));
           path.style.setProperty("--connection-color", connectionColor);
+          applyStrokeAppearance(path, connection, 1.2);
           appendRaisedUnderlay(path, connection);
+          appendConnectionSelectionHighlight(path, isSelected);
           wireLayer.append(path);
           appendConnectionHitArea(path);
         } else if (curvedConnectionTypes.has(kind)) {
@@ -2631,11 +2801,15 @@
           const end = endpointFor(to);
           const curve = document.createElementNS(wireLayer.namespaceURI, "path");
           curve.classList.add("wire-line", "wire-curve");
-          if (index === selectedConnectionIndex) curve.classList.add("is-selected");
+          const isSelected = index === selectedConnectionIndex;
+          if (isSelected) curve.classList.add("is-selected");
           curve.dataset.connectionIndex = String(index);
           curve.setAttribute("d", curvedConnectionPath(start, end, kind));
           curve.style.setProperty("--connection-color", connectionColor);
+          applyStrokeAppearance(curve, connection, 1.2);
+          if (connection.arrow) curve.setAttribute("marker-start", "url(#connection-arrow)");
           appendRaisedUnderlay(curve, connection);
+          appendConnectionSelectionHighlight(curve, isSelected);
           wireLayer.append(curve);
           appendConnectionHitArea(curve);
         } else {
@@ -2643,14 +2817,18 @@
           const end = endpointFor(to);
           const line = document.createElementNS(wireLayer.namespaceURI, "line");
           line.classList.add("wire-line");
-          if (index === selectedConnectionIndex) line.classList.add("is-selected");
+          const isSelected = index === selectedConnectionIndex;
+          if (isSelected) line.classList.add("is-selected");
           line.dataset.connectionIndex = String(index);
           line.setAttribute("x1", String(start.x));
           line.setAttribute("y1", String(start.y));
           line.setAttribute("x2", String(end.x));
           line.setAttribute("y2", String(end.y));
           line.style.setProperty("--connection-color", connectionColor);
+          applyStrokeAppearance(line, connection, 1.2);
+          if (connection.arrow) line.setAttribute("marker-start", "url(#connection-arrow)");
           appendRaisedUnderlay(line, connection);
+          appendConnectionSelectionHighlight(line, isSelected);
           wireLayer.append(line);
           appendConnectionHitArea(line);
         }
@@ -2684,7 +2862,7 @@
         }
       }
       updateCircleEditor();
-      updateColorPalette();
+      updateItemStyleControls();
       updateConnectionLayerControls();
       updateMoveControls();
       scheduleMathTypeset();
@@ -2981,6 +3159,22 @@
       const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
       const isHalfStep = (value) => isFiniteNumber(value) && Math.abs(value * 2 - Math.round(value * 2)) < 0.001;
       const isColor = (value) => typeof value === "string" && Object.prototype.hasOwnProperty.call(diagramColors, value);
+      const readStrokeAppearance = (item, allowArrow, name) => {
+        if (item.lineStyle !== undefined && !["solid", "dotted", "dashed"].includes(item.lineStyle)) {
+          fail(`${name} has an unsupported line style.`);
+        }
+        if (item.strokeWidth !== undefined && !["0.4", "0.8", "1.2", "2", "3"].includes(item.strokeWidth)) {
+          fail(`${name} has an unsupported stroke thickness.`);
+        }
+        if (item.arrow !== undefined && (!allowArrow || typeof item.arrow !== "boolean")) {
+          fail(`${name} has an unsupported arrow setting.`);
+        }
+        const appearance = {};
+        if (item.lineStyle !== undefined) appearance.lineStyle = item.lineStyle;
+        if (item.strokeWidth !== undefined) appearance.strokeWidth = item.strokeWidth;
+        if (item.arrow !== undefined) appearance.arrow = item.arrow;
+        return appearance;
+      };
       const within = (value, maximum) => value >= -0.001 && value <= maximum + 0.001;
 
       if (!isRecord(data) || data.format !== "string-diagram-studio" || ![1, 2].includes(data.version)) {
@@ -3082,7 +3276,7 @@
         }
         if (box.text !== undefined && (typeof box.text !== "string" || box.text.length > 256)) fail("A box label is invalid or too long.");
         if (box.color !== undefined && !isColor(box.color)) fail("A box has an unsupported color.");
-        return { id, x, y, width, height, color: box.color || "black", text: box.text || "" };
+        return { id, x, y, width, height, color: box.color || "black", text: box.text || "", ...readStrokeAppearance(box, false, "A box") };
       });
       const circleIds = new Set();
       const savedCircles = data.circles.map((circle) => {
@@ -3096,7 +3290,7 @@
         }
         if (circle.text !== undefined && (typeof circle.text !== "string" || circle.text.length > 256)) fail("A circle label is invalid or too long.");
         if (circle.color !== undefined && !isColor(circle.color)) fail("A circle has an unsupported color.");
-        return { id, x, y, radius, color: circle.color || "black", text: circle.text || "" };
+        return { id, x, y, radius, color: circle.color || "black", text: circle.text || "", ...readStrokeAppearance(circle, false, "A circle") };
       });
       const boxesById = new Map(savedBoxes.map((box) => [box.id, box]));
       const circlesById = new Map(savedCircles.map((circle) => [circle.id, circle]));
@@ -3148,7 +3342,8 @@
         if (!isRecord(connection)) fail("A connection entry is malformed.");
         if (connection.color !== undefined && !isColor(connection.color)) fail("A connection has an unsupported color.");
         if (connection.layer !== undefined && !["up", "down"].includes(connection.layer)) fail("A connection has an unsupported layer.");
-        const common = { color: connection.color || "black" };
+        const appearance = readStrokeAppearance(connection, true, "A connection");
+        const common = { color: connection.color || "black", ...appearance };
         if (connection.layer !== undefined) common.layer = connection.layer;
         if (connection.kind === "multiplication") {
           if (!Array.isArray(connection.sources) || connection.sources.length !== 2) fail("A multiplication must have exactly two sources.");
@@ -3458,7 +3653,27 @@
     }
 
     colorSwatches.forEach((swatch) => {
-      swatch.addEventListener("click", () => applyColorToSelection(swatch.dataset.color));
+      swatch.addEventListener("click", () => {
+        const color = swatch.dataset.color;
+        if (!diagramColors[color]) return;
+        const target = selectedStyleTarget();
+        if (target) {
+          if (target.item.color !== color) {
+            snapshot();
+            target.item.color = color;
+            renderConnections();
+            updateActions();
+          }
+          announce(`${color[0].toUpperCase()}${color.slice(1)} set for selected ${target.label}`);
+          return;
+        }
+        creationAppearance.color = color;
+        updateItemStyleControls();
+        announce(`${color[0].toUpperCase()}${color.slice(1)} set for new strands, boxes, and circles`);
+      });
+    });
+    [strokeStyleSelect, strokeWidthSelect, strokeArrowInput].forEach((control) => {
+      control.addEventListener("change", applyStrokeControls);
     });
     connectionUpButton.addEventListener("click", () => setConnectionLayer("up"));
     connectionDownButton.addEventListener("click", () => setConnectionLayer("down"));
@@ -3582,7 +3797,7 @@
       );
       if (alreadyConnected) return "duplicate";
       snapshot();
-      connections.push({ from: start, to: end, kind, color: "black" });
+      connections.push({ from: start, to: end, kind, ...newItemAppearance(true) });
       return "added";
     }
 
@@ -3780,7 +3995,7 @@
           suppressClickAfterDrag();
           if (width > 0 && height > 0) {
             snapshot();
-            boxes.push({ id: nextBoxId++, x, y, width, height });
+            boxes.push({ id: nextBoxId++, x, y, width, height, ...newItemAppearance() });
             addedBoxIndex = boxes.length - 1;
           } else {
             announce("A box needs nonzero width and height");
@@ -3908,7 +4123,7 @@
           return;
         }
         snapshot();
-        circles.push({ id: nextCircleId++, x: column + 0.5, y: row + 0.5, radius: 0.5 });
+        circles.push({ id: nextCircleId++, x: column + 0.5, y: row + 0.5, radius: 0.5, ...newItemAppearance() });
         selectCircle(circles.length - 1);
         updateCount();
         updateActions();
@@ -3974,7 +4189,7 @@
             return;
           }
           snapshot();
-          connections.push({ kind: "multiplication", sources: [...multiplicationSelection], target: selectedEndpoint, color: "black" });
+          connections.push({ kind: "multiplication", sources: [...multiplicationSelection], target: selectedEndpoint, ...newItemAppearance() });
           clearSelection();
           activeInstructions.textContent = multiplicationInstructions;
           announce("Multiplication connected");

@@ -309,6 +309,11 @@
       gap: 3px;
     }
 
+    .mirror-controls {
+      display: flex;
+      gap: 3px;
+    }
+
     .move-button {
       width: 34px;
       min-width: 34px;
@@ -335,6 +340,53 @@
       border: 1px solid var(--line);
       background: var(--surface);
     }
+    .creation-style-controls h3 {
+      margin: 0;
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .creation-style-context {
+      margin: -5px 0 0;
+      color: var(--ink-soft);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+    .creation-style-field {
+      display: grid;
+      gap: 5px;
+      color: var(--ink-soft);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .creation-style-field select {
+      width: 100%;
+      min-height: 32px;
+      padding: 5px 7px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 3px;
+      font: inherit;
+      font-weight: 400;
+    }
+    .creation-style-colors {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .creation-style-colors .color-swatch { width: 28px; height: 28px; }
+    .creation-style-arrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--ink-soft);
+      font-size: 12px;
+    }
+    .creation-style-arrow[hidden] { display: none; }
+    .creation-style-arrow input { accent-color: var(--hopf); }
+    .creation-style-arrow-side[hidden] { display: none; }
+    .creation-style-arrow-side select:disabled { opacity: 0.65; }
 
     .color-palette[hidden] { display: none; }
 
@@ -576,7 +628,7 @@
       width: min(100%, 980px);
       flex: none;
       margin: 0 auto;
-      aspect-ratio: 12 / 8;
+      aspect-ratio: 18 / 8;
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
       grid-template-rows: repeat(8, minmax(0, 1fr));
@@ -595,6 +647,20 @@
       width: 100%;
       height: 100%;
       overflow: visible;
+      pointer-events: none;
+    }
+
+    .connection-arrow-layer {
+      position: absolute;
+      z-index: 3;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+
+    .connection-arrow-head {
       pointer-events: none;
     }
 
@@ -771,13 +837,12 @@
     .grid-cell.is-group-selected .marker.bullet-marker {
       width: 13px;
       height: 13px;
-      --bullet-color: #007d72;
-      background: #007d72;
+      background: var(--bullet-color);
       border: 2px solid #fff;
-      box-shadow: 0 0 0 1px #007d72;
+      box-shadow: 0 0 0 1px var(--bullet-color);
     }
     .grid-cell.is-group-selected .point-marker {
-      background: #007d72;
+      background: var(--point-color, #b8d6e8);
       box-shadow: 0 0 0 3px rgb(0 125 114 / 22%);
     }
     .grid-cell.is-selected .marker { filter: drop-shadow(0 0 3px var(--focus)); }
@@ -788,6 +853,7 @@
     .grid-cell.is-connection-selection-source .point-marker { box-shadow: 0 0 0 5px rgb(200 63 76 / 48%); }
     .diagram-grid.is-placing .grid-cell:not(.occupied) { cursor: copy; }
     .diagram-grid.is-placing .grid-cell:not(.occupied):hover { background: #eaf5f1; }
+    .diagram-grid.is-placing-text .grid-cell:not(.occupied):hover { background: transparent; }
     .connection-selection-port-highlight {
       fill: var(--focus);
       stroke: #fff;
@@ -824,10 +890,10 @@
       z-index: 2;
       width: 9px;
       height: 9px;
-      background: #b8d6e8;
+      background: var(--point-color, #b8d6e8);
       border: 1px solid #fff;
       border-radius: 50%;
-      box-shadow: 0 0 0 1px #9fc6de;
+      box-shadow: 0 0 0 1px var(--point-color, #9fc6de);
       pointer-events: none;
     }
 
@@ -929,7 +995,12 @@
 
       <section class="menu-group tensor">
         <h3 class="menu-title">Nodes and connections</h3>
-        <div class="diagram-tool-list" aria-label="Bullet, evaluation, coevaluation, and smooth-line tools">
+        <div class="diagram-tool-list" aria-label="Node, connection, and shape tools">
+          <button class="diagram-tool" id="straight-line-button" type="button" aria-label="Straight line" aria-keyshortcuts="L" aria-pressed="false" title="Connect two nodes or shape ports by clicking them or dragging between them">
+            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><path d="M7 18 41 6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /><circle cx="7" cy="18" r="2.5" fill="currentColor" /><circle cx="41" cy="6" r="2.5" fill="currentColor" /></svg>
+            <span>Line</span>
+            <kbd class="key-hint" aria-hidden="true">L</kbd>
+          </button>
           <button class="diagram-tool" id="evaluation-button" type="button" aria-label="Evaluation" aria-keyshortcuts="E" aria-pressed="false" title="Click or tap two nodes in order, or drag between them, to draw a cap">
             <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><path d="M4 20 C10 4, 38 4, 44 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
             <span>Eval</span>
@@ -960,7 +1031,69 @@
             <span>Multiply</span>
             <kbd class="key-hint" aria-hidden="true">M</kbd>
           </button>
+          <button class="diagram-tool" id="box-button" type="button" aria-label="Draw box" aria-keyshortcuts="X" aria-pressed="false" title="Draw across tiles to place a box; on touchscreens, double-tap, hold, and drag">
+            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><rect x="11" y="3" width="26" height="18" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 2" /></svg>
+            <span>Box</span>
+            <kbd class="key-hint" aria-hidden="true">X</kbd>
+          </button>
+          <button class="diagram-tool" id="circle-button" type="button" aria-label="Draw circle" aria-keyshortcuts="O" aria-pressed="false" title="Place a circle in a tile">
+            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><circle cx="24" cy="12" r="9" stroke="currentColor" stroke-width="2.5" /></svg>
+            <span>Circle</span>
+            <kbd class="key-hint" aria-hidden="true">O</kbd>
+          </button>
+          <button class="diagram-tool" id="text-node-button" type="button" aria-label="Text node" aria-keyshortcuts="T" aria-pressed="false" title="Place a LaTeX text node">
+            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><path d="M12 5h24M24 5v15M18 20h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
+            <span>Text node</span>
+            <kbd class="key-hint" aria-hidden="true">T</kbd>
+          </button>
         </div>
+      </section>
+
+      <section class="menu-group creation-style-controls" aria-labelledby="creation-style-heading">
+        <h3 id="creation-style-heading">Item style</h3>
+        <p class="creation-style-context" id="creation-style-context" aria-live="polite">Defaults for new strands, boxes, and circles</p>
+        <label class="creation-style-field" for="stroke-style">
+          Line style
+          <select id="stroke-style" aria-label="Item line style">
+            <option value="mixed" disabled>Mixed</option>
+            <option value="solid">Solid</option>
+            <option value="dotted">Dotted</option>
+            <option value="dashed">Dashed</option>
+          </select>
+        </label>
+        <label class="creation-style-field" for="stroke-width">
+          Thickness
+          <select id="stroke-width" aria-label="Item thickness">
+            <option value="mixed" disabled>Mixed</option>
+            <option value="0.4">0.4 pt</option>
+            <option value="0.8">0.8 pt</option>
+            <option value="1.2" selected>1.2 pt</option>
+            <option value="2">2 pt</option>
+            <option value="3">3 pt</option>
+          </select>
+        </label>
+        <div class="creation-style-field">
+          <span>Colour</span>
+          <div class="color-palette creation-style-colors" id="color-palette" role="group" aria-label="Item colour">
+            <button class="color-swatch" type="button" data-color="black" style="--swatch-color:#171b1c" aria-label="Black" title="Black" aria-pressed="true"></button>
+            <button class="color-swatch" type="button" data-color="grey" style="--swatch-color:#7a8586" aria-label="Grey" title="Grey" aria-pressed="false"></button>
+            <button class="color-swatch" type="button" data-color="green" style="--swatch-color:#007d72" aria-label="Green" title="Green" aria-pressed="false"></button>
+            <button class="color-swatch" type="button" data-color="blue" style="--swatch-color:#3477a8" aria-label="Blue" title="Blue" aria-pressed="false"></button>
+            <button class="color-swatch" type="button" data-color="orange" style="--swatch-color:#cf7622" aria-label="Orange" title="Orange" aria-pressed="false"></button>
+          </div>
+        </div>
+        <label class="creation-style-arrow" id="stroke-arrow-control" for="stroke-arrow">
+          <input id="stroke-arrow" type="checkbox">
+          Arrows
+        </label>
+        <label class="creation-style-field creation-style-arrow-side" id="stroke-arrow-side-control" for="stroke-arrow-side" hidden>
+          Arrow at
+          <select id="stroke-arrow-side" aria-label="Arrow side">
+            <option value="mixed" disabled>Mixed</option>
+            <option value="end">End node</option>
+            <option value="start">Start node</option>
+          </select>
+        </label>
       </section>
 
       <div class="active-tool" id="active-tool" data-category="">
@@ -997,19 +1130,11 @@
               <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10m-4.5-4.5L13 8l-4.5 4.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
             </button>
           </div>
+          <div class="mirror-controls" role="group" aria-label="Mirror entire graph">
+            <button class="action-button" id="mirror-vertical-button" type="button" aria-label="Mirror graph top to bottom" title="Flip the graph top to bottom">Flip top/bottom</button>
+            <button class="action-button" id="mirror-horizontal-button" type="button" aria-label="Mirror graph left to right" title="Flip the graph left to right">Flip left/right</button>
+          </div>
           <button class="action-button mode-toggle" id="select-mode-button" type="button" aria-pressed="true" aria-keyshortcuts="Space" title="Return to selection mode with Space">Select <kbd class="key-hint">Space</kbd></button>
-          <button class="action-button group-select mode-toggle" id="group-select-button" type="button" aria-pressed="false" aria-keyshortcuts="G" title="Drag across the grid to select nodes, circles, and boxes; all invisible ports must be inside">Group select <kbd class="key-hint">G</kbd></button>
-          <button class="action-button draw-box mode-toggle" id="box-button" type="button" aria-pressed="false" aria-keyshortcuts="X" title="Draw across tiles to place a box; on touchscreens, double-tap, hold, and drag">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><rect x="2.5" y="3" width="11" height="10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 1" /></svg>
-            Draw box
-            <kbd class="key-hint" aria-hidden="true">X</kbd>
-          </button>
-          <button class="action-button draw-circle mode-toggle" id="circle-button" type="button" aria-pressed="false" aria-keyshortcuts="O" title="Place a circle in a tile">
-            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
-            Draw circle
-            <kbd class="key-hint" aria-hidden="true">O</kbd>
-          </button>
-          <button class="action-button text-node mode-toggle" id="text-node-button" type="button" aria-pressed="false" aria-keyshortcuts="T" title="Place a LaTeX text node">Text node <kbd class="key-hint" aria-hidden="true">T</kbd></button>
           <button class="action-button delete-selection" id="delete-selected-button" type="button" aria-label="Delete selected item" aria-keyshortcuts="Delete Backspace" title="Delete selected item (Delete; Backspace also works)" disabled>
             Delete <kbd class="key-hint" aria-hidden="true">Del</kbd>
           </button>
@@ -1114,7 +1239,7 @@
         <h2 class="latex-dialog-title" id="latex-environment-title">LaTeX Environment</h2>
         <button class="action-button" id="close-latex-environment-button" type="button">Close</button>
       </div>
-      <p class="latex-environment-intro">This standalone file includes the support commands and the current diagram. It opens with the welcome diagram shown on the canvas; copy or download the source and compile it with LaTeX.</p>
+      <p class="latex-environment-intro">This standalone file includes the support commands and the current diagram. Strand commands begin with [optional TikZ style]{line width in pt}{color}: use \dLine for straight strands, \sLine or \hLine for smooth strands, \dCup or \dCap for same-row cups/caps, and \dMult for multiplications. Use \dLMult or \dRMult only when the target shares the left or right source's x position. Add O to a strand command for its white crossing underlay; \dBull draws a colored point. Copy or download the source and compile it with LaTeX.</p>
       <textarea id="latex-environment-output" readonly spellcheck="false" aria-label="Complete LaTeX environment source"></textarea>
       <div class="latex-dialog-actions">
         <span class="latex-copy-status" id="latex-environment-status" role="status" aria-live="polite"></span>
@@ -1128,7 +1253,7 @@
 
   <script id="latex-support-source" type="text/plain">
 % String Diagram Studio LaTeX support code.
-% This support code is mirrored between index.html and the standalone template.
+% This support code is mirrored between index.html and string-diagram-studio.tex.
 \documentclass[tikz,border=8pt]{standalone}
 
 \usepackage{amsmath,amssymb}
@@ -1143,6 +1268,125 @@
 \newcommand{\blau}{blue!70!black}
 \newcommand{\orange}{orange!85!black}
 
+% Strand commands share this style prefix:
+% [<TikZ options>]{line width in pt}{color}{geometry...}
+% The style is optional (solid by default); for example, [dashed,<->].
+% Colors are the palette names above, such as \schwarz or \blau.
+% \dCup / \dCap: {left x}{y}{horizontal span}; both endpoints have the same y.
+\newcommand{\dCup}[6][solid]{%
+  \draw[#1,line width=#2,color=#3]
+    (#4,#5) .. controls (#4,#5 - 0.6 * #6) and (#4 + #6,#5 - 0.6 * #6) .. (#4 + #6,#5);
+}
+\newcommand{\dCap}[6][solid]{%
+  \draw[#1,line width=#2,color=#3]
+    (#4,#5) .. controls (#4,#5 + 0.6 * #6) and (#4 + #6,#5 + 0.6 * #6) .. (#4 + #6,#5);
+}
+\newcommand{\dCupO}[6][solid]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4,#5) .. controls (#4,#5 - 0.6 * #6) and (#4 + #6,#5 - 0.6 * #6) .. (#4 + #6,#5);
+  \dCup[#1]{#2}{#3}{#4}{#5}{#6}%
+}
+\newcommand{\dCapO}[6][solid]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4,#5) .. controls (#4,#5 + 0.6 * #6) and (#4 + #6,#5 + 0.6 * #6) .. (#4 + #6,#5);
+  \dCap[#1]{#2}{#3}{#4}{#5}{#6}%
+}
+
+% \dLine joins two arbitrary endpoints with a straight strand.
+% Its geometry is {x1}{y1}{x2}{y2}; style options can include TikZ arrows.
+\newcommand{\dLine}[7][solid]{%
+  \draw[#1,line width=#2,color=#3] (#4,#5) -- (#6,#7);
+}
+\newcommand{\dLineO}[7][solid]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#4,#5) -- (#6,#7);
+  \dLine[#1]{#2}{#3}{#4}{#5}{#6}{#7}%
+}
+
+% \sLine has vertical endpoint tangents; \hLine has horizontal endpoint
+% tangents. Both use {x1}{y1}{x2}{y2} and work for any distinct endpoints.
+\newcommand{\sLine}[7][solid]{%
+  \draw[#1,line width=#2,color=#3]
+    (#4,#5) .. controls (#4,#5 * 0.45 + #7 * 0.55) and (#6,#5 * 0.55 + #7 * 0.45) .. (#6,#7);
+}
+\newcommand{\sLineO}[7][solid]{%
+  \draw[line width=4.5pt,color=white]
+    (#4,#5) .. controls (#4,#5 * 0.45 + #7 * 0.55) and (#6,#5 * 0.55 + #7 * 0.45) .. (#6,#7);
+  \sLine[#1]{#2}{#3}{#4}{#5}{#6}{#7}%
+}
+\newcommand{\hLine}[7][solid]{%
+  \draw[#1,line width=#2,color=#3]
+    (#4,#5) .. controls (#4 * 0.45 + #6 * 0.55,#5) and (#4 * 0.55 + #6 * 0.45,#7) .. (#6,#7);
+}
+\newcommand{\hLineO}[7][solid]{%
+  \draw[line width=4.5pt,color=white]
+    (#4,#5) .. controls (#4 * 0.45 + #6 * 0.55,#5) and (#4 * 0.55 + #6 * 0.45,#7) .. (#6,#7);
+  \hLine[#1]{#2}{#3}{#4}{#5}{#6}{#7}%
+}
+
+% Multiplication geometry:
+% {left source x}{source y}{source span}{signed target height}{target x offset}
+% The sources share y; the target lies between them on a different row.
+% Use dMult by default. dLMult/dRMult are for targets aligned with the left/right source.
+\newcommand{\dMult}[8][solid]{%
+  \draw[#1,line width=#2,color=#3]
+    (#4,#5) -- (#4,#5 + #7 * 0.2)
+    .. controls (#4,#5 + #7 * 0.5) .. (#4 + #6 * 0.25,#5 + #7 * 0.5)
+    -- (#4 + #6 * 0.5,#5 + #7 * 0.5)
+    -- (#4 + #6 * 0.75,#5 + #7 * 0.5)
+    .. controls (#4 + #6,#5 + #7 * 0.5) .. (#4 + #6,#5 + #7 * 0.2)
+    -- (#4 + #6,#5);
+  \draw[#1,line width=#2,color=#3]
+    (#4 + #8,#5 + #7 * 0.5) -- (#4 + #8,#5 + #7);
+}
+\newcommand{\dMultO}[8][solid]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4,#5) -- (#4,#5 + #7 * 0.2)
+    .. controls (#4,#5 + #7 * 0.5) .. (#4 + #6 * 0.25,#5 + #7 * 0.5)
+    -- (#4 + #6 * 0.5,#5 + #7 * 0.5)
+    -- (#4 + #6 * 0.75,#5 + #7 * 0.5)
+    .. controls (#4 + #6,#5 + #7 * 0.5) .. (#4 + #6,#5 + #7 * 0.2)
+    -- (#4 + #6,#5);
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4 + #8,#5 + #7 * 0.5) -- (#4 + #8,#5 + #7);
+  \dMult[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
+}
+\newcommand{\dLMult}[8][solid]{%
+  \draw[#1,line width=#2,color=#3]
+    (#4,#5) -- (#4,#5 + #7 * 0.5)
+    -- (#4 + #6 * 0.75,#5 + #7 * 0.5)
+    .. controls (#4 + #6,#5 + #7 * 0.5) .. (#4 + #6,#5 + #7 * 0.2)
+    -- (#4 + #6,#5);
+  \draw[#1,line width=#2,color=#3]
+    (#4 + #8,#5 + #7 * 0.5) -- (#4 + #8,#5 + #7);
+}
+\newcommand{\dRMult}[8][solid]{%
+  \draw[#1,line width=#2,color=#3]
+    (#4,#5) -- (#4,#5 + #7 * 0.2)
+    .. controls (#4,#5 + #7 * 0.5) .. (#4 + #6 * 0.25,#5 + #7 * 0.5)
+    -- (#4 + #6,#5 + #7 * 0.5)
+    -- (#4 + #6,#5);
+  \draw[#1,line width=#2,color=#3]
+    (#4 + #8,#5 + #7 * 0.5) -- (#4 + #8,#5 + #7);
+}
+\newcommand{\dLMultO}[8][solid]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4,#5) -- (#4,#5 + #7 * 0.5)
+    -- (#4 + #6 * 0.75,#5 + #7 * 0.5)
+    .. controls (#4 + #6,#5 + #7 * 0.5) .. (#4 + #6,#5 + #7 * 0.2)
+    -- (#4 + #6,#5);
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4 + #8,#5 + #7 * 0.5) -- (#4 + #8,#5 + #7);
+  \dLMult[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
+}
+\newcommand{\dRMultO}[8][solid]{%
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4,#5) -- (#4,#5 + #7 * 0.2)
+    .. controls (#4,#5 + #7 * 0.5) .. (#4 + #6 * 0.25,#5 + #7 * 0.5)
+    -- (#4 + #6,#5 + #7 * 0.5)
+    -- (#4 + #6,#5);
+  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+    (#4 + #8,#5 + #7 * 0.5) -- (#4 + #8,#5 + #7);
+  \dRMult[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
 % Internal multiplication renderer. Arguments:
 % #1 target x-offset from the left source, or "center"
 % #2 TikZ stroke style, #3 left source x, #4 source y, #5 source span
@@ -1316,9 +1560,72 @@
     (#1,#2) .. controls (#1 * 0.45 + #3 * 0.55,#2) and (#1 * 0.55 + #3 * 0.45,#4) .. (#3,#4);
   \hLine{#1}{#2}{#3}{#4}{#5}%
 }
+
+% A bullet is a filled point: {x}{y}{color}.
+\newcommand{\dBull}[3]{\filldraw[draw=#3,fill=#3] (#1,#2) circle[radius=0.09cm];}
   </script>
   <script id="default-diagram-source" type="application/json">
-{"format":"string-diagram-studio","version":2,"grid":{"columns":8,"rows":7},"nodes":[{"cell":5,"type":"text","label":"X"},{"cell":7,"type":"text","label":"A"},{"cell":8,"type":"point"},{"cell":9,"type":"point"},{"cell":10,"type":"point"},{"cell":11,"type":"bullet"},{"cell":12,"type":"point"},{"cell":14,"type":"bullet"},{"cell":25,"type":"point"},{"cell":26,"type":"point"},{"cell":27,"type":"point"},{"cell":28,"type":"point"},{"cell":29,"type":"point"},{"cell":30,"type":"point"},{"cell":41,"type":"bullet"},{"cell":42,"type":"bullet","color":"grey"},{"cell":43,"type":"bullet"},{"cell":44,"type":"point"},{"cell":47,"type":"point"},{"cell":48,"type":"text","label":"X"},{"cell":49,"type":"bullet"},{"cell":50,"type":"bullet","color":"blue"},{"cell":51,"type":"bullet"},{"cell":53,"type":"text","label":"A"}],"connections":[{"from":42,"to":51,"kind":null,"color":"grey"},{"from":8,"to":48,"kind":null,"color":"black"},{"from":25,"to":9,"kind":null,"color":"black"},{"from":8,"to":9,"kind":"evaluation","color":"black"},{"from":10,"to":12,"kind":"evaluation","color":"black"},{"from":12,"to":28,"kind":null,"color":"black"},{"from":47,"to":7,"kind":null,"color":"black"},{"kind":"multiplication","sources":[44,47],"target":53,"color":"black"},{"from":49,"to":43,"kind":"smooth-line","color":"orange","layer":"up"},{"from":41,"to":50,"kind":null,"color":"green","layer":"up"},{"from":10,"to":{"boxId":3,"x":2.5,"y":2.5},"kind":null,"color":"black"},{"from":11,"to":{"boxId":3,"x":3.5,"y":2.5},"kind":null,"color":"black"},{"from":26,"to":{"boxId":3,"x":2.5,"y":3},"kind":null,"color":"black"},{"from":27,"to":{"boxId":3,"x":3.5,"y":3},"kind":null,"color":"black"},{"from":25,"to":26,"kind":"coevaluation","color":"black"},{"from":29,"to":{"boxId":4,"x":5.5,"y":3},"kind":null,"color":"black"},{"from":30,"to":{"boxId":4,"x":6.5,"y":3},"kind":null,"color":"black"},{"from":14,"to":{"boxId":4,"x":6.5,"y":2.5},"kind":null,"color":"black"},{"from":5,"to":{"boxId":4,"x":5.5,"y":2.5},"kind":null,"color":"black"},{"from":28,"to":29,"kind":"coevaluation","color":"black"},{"kind":"multiplication","sources":[27,30],"target":44,"color":"black"}],"boxes":[{"id":3,"x":2,"y":2.5,"width":2,"height":0.5,"text":"f"},{"id":4,"x":5,"y":2.5,"width":2,"height":0.5,"text":"g"}],"circles":[],"nextBoxId":5,"nextCircleId":1}
+{
+  "format": "string-diagram-studio",
+  "version": 2,
+  "grid": {"columns": 8, "rows": 8},
+  "nodes": [
+    {"cell":5,"type":"text","label":"X"},
+    {"cell":7,"type":"text","label":"B"},
+    {"cell":8,"type":"point"},
+    {"cell":9,"type":"point"},
+    {"cell":10,"type":"point"},
+    {"cell":11,"type":"bullet"},
+    {"cell":12,"type":"point"},
+    {"cell":14,"type":"bullet"},
+    {"cell":25,"type":"point"},
+    {"cell":26,"type":"point"},
+    {"cell":27,"type":"point"},
+    {"cell":28,"type":"point"},
+    {"cell":29,"type":"point"},
+    {"cell":30,"type":"point"},
+    {"cell":41,"type":"bullet"},
+    {"cell":42,"type":"bullet","color":"grey"},
+    {"cell":43,"type":"bullet"},
+    {"cell":44,"type":"point"},
+    {"cell":47,"type":"point"},
+    {"cell":48,"type":"text","label":"X"},
+    {"cell":49,"type":"bullet"},
+    {"cell":50,"type":"bullet","color":"blue"},
+    {"cell":51,"type":"bullet"},
+    {"cell":53,"type":"text","label":"A","x":5.5,"y":7}
+  ],
+  "connections": [
+    {"from":42,"to":51,"kind":null,"color":"grey"},
+    {"from":8,"to":48,"kind":null,"color":"black"},
+    {"from":25,"to":9,"kind":null,"color":"black"},
+    {"from":8,"to":9,"kind":"evaluation","color":"black"},
+    {"from":10,"to":12,"kind":"evaluation","color":"black"},
+    {"from":12,"to":28,"kind":null,"color":"black"},
+    {"from":47,"to":7,"kind":null,"color":"black"},
+    {"kind":"multiplication","sources":[44,47],"target":53,"color":"black"},
+    {"from":49,"to":43,"kind":"smooth-line","color":"orange","layer":"up"},
+    {"from":41,"to":50,"kind":null,"color":"green","layer":"up"},
+    {"from":25,"to":26,"kind":"coevaluation","color":"black"},
+    {"from":28,"to":29,"kind":"coevaluation","color":"black"},
+    {"kind":"multiplication","sources":[27,30],"target":44,"color":"black"},
+    {"from":10,"to":{"boxId":5,"x":2.5,"y":2},"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"},
+    {"from":26,"to":{"boxId":5,"x":2.5,"y":3},"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"},
+    {"from":27,"to":{"boxId":5,"x":3.5,"y":3},"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"},
+    {"from":11,"to":{"boxId":5,"x":3.5,"y":2},"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"},
+    {"from":5,"to":{"boxId":6,"x":5.5,"y":2},"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"},
+    {"from":{"boxId":6,"x":5.5,"y":3},"to":29,"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"},
+    {"from":30,"to":{"boxId":6,"x":6.5,"y":3},"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"},
+    {"from":14,"to":{"boxId":6,"x":6.5,"y":2},"kind":null,"color":"black","lineStyle":"solid","strokeWidth":"1.2","arrow":false,"arrowSide":"end"}
+  ],
+  "boxes": [
+    {"id":5,"x":2,"y":2,"width":2,"height":1,"color":"black","lineStyle":"solid","strokeWidth":"1.2","text":"f"},
+    {"id":6,"x":5,"y":2,"width":2,"height":1,"color":"black","lineStyle":"solid","strokeWidth":"1.2","text":"g"}
+  ],
+  "circles": [],
+  "nextBoxId": 7,
+  "nextCircleId": 1
+}
   </script>
   <script>
     // Labels and display metadata for structural nodes and connection tools.
@@ -1331,21 +1638,25 @@
       multiplication: { label: "Multiplication", symbol: "", category: "tensor" },
       text: { label: "Text node", symbol: "", category: "text" }
     };
+    const selectionModeInstructions = "Click empty tiles to place blue nodes or click an object to select it. Drag across the grid to group-select nodes and shapes; all shape ports must be inside the selection. On touchscreens, double-tap, hold, and drag.";
+    const multiplicationInstructions = "Click or tap two source nodes or shape ports on the same row, then click or tap a target between them on a different row.";
     const selectionModeInstructions = "Click empty tiles to place structural nodes. Draw straight lines by dragging between nodes; on touchscreens, double-tap, hold, and drag. Click geometric shapes to select them and change their appearance.";
     const multiplicationInstructions = "Click or tap two source nodes or shape ports on the same row, then click or tap a target above or below them whose horizontal position is between the sources.";
     const multiplicationSecondSourceInstructions = "Source 1 selected. Select a second source node or shape port on the same row.";
-    const multiplicationTargetInstructions = "Two sources selected. Select a target node whose horizontal position is between the sources.";
+    const multiplicationTargetInstructions = "Two sources selected. Select a target node between the sources on a different row.";
     const boxInstructions = "Draw across tiles to place a box. On touchscreens, double-tap, hold, and drag.";
     const circleInstructions = "Place a circle in a tile.";
     const bulletInstructions = "Place a bullet node; it appears in the LaTeX output.";
-    const evaluationInstructions = "Connect two nodes by clicking or tapping each, or drag between them (on touchscreens, double-tap, hold, and drag) to draw an evaluation cap.";
-    const coevaluationInstructions = "Connect two nodes by clicking or tapping each, or drag between them (on touchscreens, double-tap, hold, and drag) to draw a coevaluation cup.";
+    const evaluationInstructions = "Connect two distinct nodes on the same row by clicking or tapping each, or drag between them, to draw an evaluation cap.";
+    const coevaluationInstructions = "Connect two distinct nodes on the same row by clicking or tapping each, or drag between them, to draw a coevaluation cup.";
     const smoothLineInstructions = "Connect two nodes by clicking or tapping each, or drag between them (on touchscreens, double-tap, hold, and drag) to draw a smooth curve with vertical tangents at both ends.";
     const smoothHorizontalLineInstructions = "Connect two nodes by clicking or tapping each, or drag between them (on touchscreens, double-tap, hold, and drag) to draw a smooth curve with horizontal tangents at both ends.";
-    const groupSelectionInstructions = "Drag across the grid to group-select nodes, circles, and boxes. On touchscreens, double-tap, hold, and drag. A box or circle is selected only if all its invisible ports are inside the selection. Selected nodes appear green; use the toolbar arrows to move them one tile.";
+    const straightLineInstructions = "Connect two nodes or shape ports by clicking each one or dragging between them. On touchscreens, double-tap, hold, and drag.";
     const circleBoundaryCursorTolerancePx = 4;
     const smoothConnectionTypes = new Set(["smooth-line", "smooth-horizontal"]);
     const curvedConnectionTypes = new Set(["evaluation", "coevaluation", ...smoothConnectionTypes]);
+    const latexXScale = 1.5;
+    const latexYScale = 1;
     const diagramColors = {
       black: { css: "#171b1c", latex: "\\schwarz" },
       grey: { css: "#7a8586", latex: "\\grau" },
@@ -1361,6 +1672,7 @@
      */
     /**
      * Ordinary connections have from/to endpoints; multiplications have two sources and one target.
+     * @typedef {{from: DiagramEndpoint, to: DiagramEndpoint, kind?: "evaluation" | "coevaluation" | "smooth-line" | "smooth-horizontal" | null, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean, arrowSide?: "start" | "end"} | {kind: "multiplication", sources: [DiagramEndpoint, DiagramEndpoint], target: DiagramEndpoint, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean, arrowSide?: "start" | "end"}} DiagramConnection
      * @typedef {{from: DiagramEndpoint, to: DiagramEndpoint, kind?: "evaluation" | "coevaluation" | "smooth-line" | "smooth-horizontal" | null, color?: string, layer?: string} | {kind: "multiplication", sources: [DiagramEndpoint, DiagramEndpoint], target: DiagramEndpoint, color?: string, layer?: string}} DiagramConnection
      */
 
@@ -1370,8 +1682,15 @@
     let cells = Array(columns * rows).fill(null);
     /** @type {Set<number>} Empty cells explicitly marked as orientation points. */
     const points = new Set();
+    /** @type {Map<number, string>} Non-default colors for orientation points. */
+    const pointColors = new Map();
     /** @type {Map<number, string>} LaTeX labels belonging to text-node cells. */
     const textNodeValues = new Map();
+    /**
+     * @type {Map<number, {x: number, y: number}>}
+     * Positions for text nodes away from their cell centers.
+     */
+    const textNodePositions = new Map();
     /** @type {Map<number, string>} Non-default colors for bullet cells. */
     const bulletColors = new Map();
     /** @type {DiagramConnection[]} */
@@ -1399,11 +1718,18 @@
     const moveLeftButton = document.getElementById("move-left-button");
     const moveDownButton = document.getElementById("move-down-button");
     const moveRightButton = document.getElementById("move-right-button");
+    const mirrorVerticalButton = document.getElementById("mirror-vertical-button");
+    const mirrorHorizontalButton = document.getElementById("mirror-horizontal-button");
     const wireLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const connectionArrowLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     wireLayer.classList.add("wire-layer");
     wireLayer.setAttribute("viewBox", `0 0 ${columns} ${rows}`);
     wireLayer.setAttribute("preserveAspectRatio", "none");
     wireLayer.setAttribute("aria-hidden", "true");
+    connectionArrowLayer.classList.add("connection-arrow-layer");
+    connectionArrowLayer.setAttribute("viewBox", `0 0 ${columns} ${rows}`);
+    connectionArrowLayer.setAttribute("preserveAspectRatio", "none");
+    connectionArrowLayer.setAttribute("aria-hidden", "true");
     const activeTool = document.getElementById("active-tool");
     const activeLabel = document.getElementById("active-label");
     const activeInstructions = document.getElementById("active-instructions");
@@ -1433,13 +1759,20 @@
     const latexCopyStatus = document.getElementById("latex-copy-status");
     const latexSupportSource = document.getElementById("latex-support-source").textContent.trim();
     const selectModeButton = document.getElementById("select-mode-button");
-    const groupSelectButton = document.getElementById("group-select-button");
+    const straightLineButton = document.getElementById("straight-line-button");
     const boxButton = document.getElementById("box-button");
     const circleButton = document.getElementById("circle-button");
     const boxEditor = document.getElementById("box-editor");
     const boxLabelInput = document.getElementById("box-label");
     const circleEditor = document.getElementById("circle-editor");
     const circleLabelInput = document.getElementById("circle-label");
+    const strokeStyleSelect = document.getElementById("stroke-style");
+    const strokeWidthSelect = document.getElementById("stroke-width");
+    const strokeArrowControl = document.getElementById("stroke-arrow-control");
+    const strokeArrowInput = document.getElementById("stroke-arrow");
+    const strokeArrowSideControl = document.getElementById("stroke-arrow-side-control");
+    const strokeArrowSideSelect = document.getElementById("stroke-arrow-side");
+    const creationStyleContext = document.getElementById("creation-style-context");
     const textNodeButton = document.getElementById("text-node-button");
     const evaluationButton = document.getElementById("evaluation-button");
     const coevaluationButton = document.getElementById("coevaluation-button");
@@ -1454,6 +1787,13 @@
     const textNodeInput = document.getElementById("text-node-label");
     const colorPalette = document.getElementById("color-palette");
     const colorSwatches = [...document.querySelectorAll(".color-swatch")];
+    const creationAppearance = {
+      color: "black",
+      lineStyle: "solid",
+      strokeWidth: "1.2",
+      arrow: false,
+      arrowSide: "end"
+    };
     const connectionLayerControls = document.getElementById("connection-layer-controls");
     const connectionUpButton = document.getElementById("connection-up-button");
     const connectionDownButton = document.getElementById("connection-down-button");
@@ -1486,6 +1826,7 @@
     }
 
     [
+      { id: "straight-line", button: straightLineButton, shortcut: "l", activate: toggleStraightLineMode },
       { id: "evaluation", button: evaluationButton, shortcut: "e", activate: () => activateCurvedConnection("evaluation") },
       { id: "coevaluation", button: coevaluationButton, shortcut: "c", activate: () => activateCurvedConnection("coevaluation") },
       { id: "smooth-line", button: smoothLineButton, shortcut: "v", activate: () => activateCurvedConnection("smooth-line") },
@@ -1494,8 +1835,7 @@
       { id: "multiplication", button: multiplicationButton, shortcut: "m", activate: toggleMultiplicationMode },
       { id: "box", button: boxButton, shortcut: "x", activate: () => setBoxMode(!boxMode) },
       { id: "circle", button: circleButton, shortcut: "o", activate: () => setCircleMode(!circleMode) },
-      { id: "text", button: textNodeButton, shortcut: "t", activate: () => setTextNodeMode(true) },
-      { id: "group-select", button: groupSelectButton, shortcut: "g", activate: () => toggleGroupSelectMode() }
+      { id: "text", button: textNodeButton, shortcut: "t", activate: () => setTextNodeMode(true) }
     ].forEach(registerTool);
 
     let activeOperationKey = "";
@@ -1510,9 +1850,12 @@
     let boxMode = false;
     let circleMode = false;
     let textNodeMode = false;
-    let groupSelectMode = false;
+    let groupSelectMode = true;
+    let straightLineMode = false;
     const groupSelectedCells = new Set();
     const groupSelectedEndpoints = new Map();
+    let diagramClipboard = null;
+    let lastGridPointer = null;
     let mathTypesetScheduled = false;
     let mathTypesetRunning = false;
     let mathTypesetAgain = false;
@@ -1607,8 +1950,8 @@
         const candidates = [
           { side: "north", x: circle.x, y: circle.y - circle.radius },
           { side: "south", x: circle.x, y: circle.y + circle.radius },
-          { side: "east", x: circle.x + circle.radius, y: circle.y },
-          { side: "west", x: circle.x - circle.radius, y: circle.y }
+          { side: "east", x: circle.x + circle.radius / latexXScale, y: circle.y },
+          { side: "west", x: circle.x - circle.radius / latexXScale, y: circle.y }
         ];
         candidates.forEach((candidate) => {
           const distance = Math.hypot(
@@ -1637,9 +1980,10 @@
     function updateGridDimensions() {
       grid.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
       grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
-      grid.style.aspectRatio = `${columns} / ${rows}`;
+      grid.style.aspectRatio = `${columns * latexXScale} / ${rows * latexYScale}`;
       grid.setAttribute("aria-label", `${columns} by ${rows} diagram grid`);
       wireLayer.setAttribute("viewBox", `0 0 ${columns} ${rows}`);
+      connectionArrowLayer.setAttribute("viewBox", `0 0 ${columns} ${rows}`);
       updateCanvasZoom();
     }
 
@@ -1677,7 +2021,8 @@
       boxMode = id === "box";
       circleMode = id === "circle";
       textNodeMode = id === "text";
-      groupSelectMode = id === "group-select";
+      groupSelectMode = id === null;
+      straightLineMode = id === "straight-line";
       lastTouchTap = null;
       clearConnectionSelectionStart();
       clearSelection();
@@ -1718,7 +2063,7 @@
         category: "text",
         instructions: selectionModeInstructions,
         hideInstructions: true,
-        announcement: "Click an empty grid cell to place a LaTeX text node"
+        announcement: "Click an empty grid position to place a LaTeX text node at a half-grid step"
       });
     }
 
@@ -1759,22 +2104,22 @@
       });
     }
 
-    function toggleGroupSelectMode() {
-      if (groupSelectMode) {
+    function toggleStraightLineMode() {
+      if (straightLineMode) {
         setDefaultMode();
         return;
       }
       activateToolMode({
-        id: "group-select",
-        label: "Group selection",
-        category: "selection",
-        instructions: groupSelectionInstructions,
-        announcement: "Group selection mode; drag across the grid, or double-tap, hold, and drag on touchscreens"
+        id: "straight-line",
+        label: "Straight line",
+        category: "tensor",
+        instructions: straightLineInstructions
       });
     }
 
     function updateGridModeClasses() {
       grid.classList.toggle("is-placing", Boolean(activeOperationKey || textNodeMode));
+      grid.classList.toggle("is-placing-text", textNodeMode);
       grid.classList.toggle("is-boxing", boxMode);
       grid.classList.toggle("is-circling", circleMode);
       grid.classList.toggle("is-group-select", groupSelectMode);
@@ -1785,6 +2130,7 @@
       updateGridDimensions();
       if (window.MathJax?.typesetClear) window.MathJax.typesetClear([grid]);
       grid.replaceChildren(wireLayer);
+      const cellElements = document.createDocumentFragment();
       cells.forEach((operationKey, index) => {
         // Flat storage keeps responsive grid cells mapped to stable row/column coordinates.
         const row = Math.floor(index / columns) + 1;
@@ -1810,6 +2156,11 @@
           marker.className = "marker";
           if (isTextNode) {
             marker.classList.add("math-marker");
+            const position = endpointFor(index);
+            marker.style.position = "absolute";
+            marker.style.left = `${(position.x - (index % columns)) * 100}%`;
+            marker.style.top = `${(position.y - Math.floor(index / columns)) * 100}%`;
+            marker.style.transform = "translate(-50%, -50%)";
             const value = index === selectedCellIndex && textNodeDraft !== null
               ? textNodeDraft
               : (textNodeValues.get(index) ?? operation.symbol);
@@ -1836,14 +2187,16 @@
           cell.setAttribute("aria-label", `Orientation point, column ${column}, row ${row}`);
           const point = document.createElement("span");
           point.className = "point-marker";
+          if (pointColors.has(index)) point.style.setProperty("--point-color", diagramColors[pointColors.get(index)].css);
           point.setAttribute("aria-hidden", "true");
           cell.append(point);
         } else {
           cell.setAttribute("aria-label", `Empty, column ${column}, row ${row}`);
         }
 
-        grid.append(cell);
+        cellElements.append(cell);
       });
+      grid.append(cellElements);
       updateGridModeClasses();
       renderConnections();
       updateActions();
@@ -1867,7 +2220,7 @@
     function circleAtInterior(point) {
       for (let index = circles.length - 1; index >= 0; index -= 1) {
         const circle = circles[index];
-        if (Math.hypot(point.x - circle.x, point.y - circle.y) <= circle.radius) return index;
+        if (Math.hypot((point.x - circle.x) * latexXScale, (point.y - circle.y) * latexYScale) <= circle.radius) return index;
       }
       return null;
     }
@@ -1928,8 +2281,25 @@
       return nearestDistance <= 12 ? nearestNode : null;
     }
 
+    function connectionEndpointAt(event) {
+      const existingEndpoint = wireEndpointAt(event);
+      if (existingEndpoint !== null) return existingEndpoint;
+
+      const point = gridPositionAt(event.clientX, event.clientY);
+      if (point.x < 0 || point.x > columns || point.y < 0 || point.y > rows ||
+        boxAtInterior(point) !== null || circleAtInterior(point) !== null) return null;
+
+      const column = Math.min(columns - 1, Math.max(0, Math.floor(point.x)));
+      const row = Math.min(rows - 1, Math.max(0, Math.floor(point.y)));
+      const index = row * columns + column;
+      if (hasNode(index) || boxes.some((box) =>
+        point.x > box.x && point.x < box.x + box.width &&
+        point.y > box.y && point.y < box.y + box.height)) return null;
+      return index;
+    }
+
     function updateSelectionCursor(event) {
-      if (boxMode || circleMode || textNodeMode || groupSelectMode || activeOperationKey || wireStartEndpoint !== null) {
+      if (boxMode || circleMode || textNodeMode || straightLineMode || activeOperationKey || wireStartEndpoint !== null) {
         grid.style.cursor = "";
         return;
       }
@@ -1960,7 +2330,7 @@
       const cellWidth = rect.width / columns;
       const cellHeight = rect.height / rows;
       const distance = Math.hypot((point.x - circle.x) * cellWidth, (point.y - circle.y) * cellHeight);
-      const radius = circle.radius * (cellWidth + cellHeight) / 2;
+      const radius = circle.radius * latexYScale * cellHeight;
       grid.style.cursor = Math.abs(distance - radius) <= circleBoundaryCursorTolerancePx
         ? "grab"
         : distance < radius ? "pointer" : "";
@@ -1976,7 +2346,8 @@
       boxMode = false;
       circleMode = false;
       textNodeMode = false;
-      groupSelectMode = false;
+      groupSelectMode = true;
+      straightLineMode = false;
       activeOperationKey = "";
       updateToolButtons();
       updateGridModeClasses();
@@ -1988,7 +2359,7 @@
       selectedBoxIndex = index;
       boxLabelDraft = boxes[index].text || "";
       boxLabelInput.value = boxLabelDraft;
-      renderConnections();
+      renderGrid();
       updateActions();
       updateBoxEditor();
       updateTextNodeEditor();
@@ -1999,7 +2370,8 @@
       boxMode = false;
       circleMode = false;
       textNodeMode = false;
-      groupSelectMode = false;
+      groupSelectMode = true;
+      straightLineMode = false;
       activeOperationKey = "";
       updateToolButtons();
       updateGridModeClasses();
@@ -2014,6 +2386,7 @@
       updateBoxEditor();
       updateCircleEditor();
       updateTextNodeEditor();
+      renderGrid();
       updateColorPalette();
       renderConnections();
       updateActions();
@@ -2036,6 +2409,160 @@
         circleLabelDraft = circle.text || "";
         circleLabelInput.value = circleLabelDraft;
       }
+    }
+
+    function selectedStyleTargets() {
+      const targets = [];
+      const addConnection = (connection) => targets.push({
+        item: connection,
+        label: connection.kind === "multiplication" ? "multiplication" : "strand",
+        supportsArrow: connection.kind !== "multiplication",
+        supportsStroke: true,
+        supportsColor: true
+      });
+
+      if (connections[selectedConnectionIndex]) {
+        addConnection(connections[selectedConnectionIndex]);
+        return targets;
+      }
+      if (boxes[selectedBoxIndex]) {
+        targets.push({ item: boxes[selectedBoxIndex], label: "box", supportsArrow: false, supportsStroke: true, supportsColor: true });
+        return targets;
+      }
+      if (circles[selectedCircleIndex]) {
+        targets.push({ item: circles[selectedCircleIndex], label: "circle", supportsArrow: false, supportsStroke: true, supportsColor: true });
+        return targets;
+      }
+
+      const selectedCells = new Set([...groupSelectedCells]);
+      if (selectedCellIndex !== null) selectedCells.add(selectedCellIndex);
+      selectedCells.forEach((index) => {
+        if (points.has(index)) {
+          targets.push({
+            item: { color: pointColors.get(index) || "blue" },
+            label: "orientation point",
+            supportsArrow: false,
+            supportsStroke: false,
+            supportsColor: true,
+            setColor: (color) => pointColors.set(index, color)
+          });
+        } else if (cells[index] === "bullet") {
+          targets.push({
+            item: { color: bulletColors.get(index) || "black" },
+            label: "bullet",
+            supportsArrow: false,
+            supportsStroke: false,
+            supportsColor: true,
+            setColor: (color) => bulletColors.set(index, color)
+          });
+        }
+      });
+
+      const selectedBoxIds = new Set([...groupSelectedEndpoints.values()]
+        .filter((endpoint) => endpoint.boxId !== undefined)
+        .map((endpoint) => endpoint.boxId));
+      const selectedCircleIds = new Set([...groupSelectedEndpoints.values()]
+        .filter((endpoint) => endpoint.circleId !== undefined)
+        .map((endpoint) => endpoint.circleId));
+      selectedBoxIds.forEach((id) => {
+        const box = boxes.find((candidate) => candidate.id === id);
+        if (box) targets.push({ item: box, label: "box", supportsArrow: false, supportsStroke: true, supportsColor: true });
+      });
+      selectedCircleIds.forEach((id) => {
+        const circle = circles.find((candidate) => candidate.id === id);
+        if (circle) targets.push({ item: circle, label: "circle", supportsArrow: false, supportsStroke: true, supportsColor: true });
+      });
+
+      const endpointIsSelected = (endpoint) => typeof endpoint === "number"
+        ? selectedCells.has(endpoint)
+        : endpoint.boxId !== undefined
+          ? selectedBoxIds.has(endpoint.boxId)
+          : selectedCircleIds.has(endpoint.circleId);
+      connections.forEach((connection) => {
+        if (connectionEndpoints(connection).every(endpointIsSelected)) addConnection(connection);
+      });
+      return targets;
+    }
+
+    function commonStyleValue(targets, getValue, fallback) {
+      if (!targets.length) return fallback;
+      const firstValue = getValue(targets[0]);
+      return targets.every((target) => getValue(target) === firstValue) ? firstValue : "mixed";
+    }
+
+    function updateItemStyleControls() {
+      const targets = selectedStyleTargets();
+      const strokeTargets = targets.filter((target) => target.supportsStroke);
+      const arrowTargets = targets.filter((target) => target.supportsArrow);
+      strokeStyleSelect.value = commonStyleValue(strokeTargets, (target) => target.item.lineStyle || "solid", creationAppearance.lineStyle);
+      strokeWidthSelect.value = commonStyleValue(strokeTargets, (target) => target.item.strokeWidth || "1.2", creationAppearance.strokeWidth);
+      const arrowValues = arrowTargets.map((target) => target.item.arrow === true);
+      strokeArrowInput.checked = arrowValues.length > 0 && arrowValues.every(Boolean);
+      strokeArrowInput.indeterminate = arrowValues.some(Boolean) && !arrowValues.every(Boolean);
+      strokeArrowSideSelect.value = commonStyleValue(arrowTargets, (target) => target.item.arrowSide || creationAppearance.arrowSide, creationAppearance.arrowSide);
+      strokeArrowControl.hidden = targets.length > 0 ? arrowTargets.length === 0 : false;
+      strokeArrowSideControl.hidden = targets.length > 0 ? arrowTargets.length === 0 : !creationAppearance.arrow;
+      strokeArrowSideSelect.disabled = !strokeArrowInput.checked && !strokeArrowInput.indeterminate;
+      creationStyleContext.textContent = targets.length
+        ? `Editing ${targets.length} selected item${targets.length === 1 ? "" : "s"}`
+        : "Defaults for new strands, boxes, and circles";
+      colorSwatches.forEach((swatch) => {
+        swatch.setAttribute("aria-pressed", String(targets.length > 0 && targets.every((target) =>
+          target.supportsColor && (target.item.color || "black") === swatch.dataset.color)));
+      });
+    }
+
+    function applyStrokeControls() {
+      const targets = selectedStyleTargets();
+      if (!targets.length) {
+        creationAppearance.lineStyle = strokeStyleSelect.value;
+        creationAppearance.strokeWidth = strokeWidthSelect.value;
+        creationAppearance.arrow = strokeArrowInput.checked;
+        creationAppearance.arrowSide = strokeArrowSideSelect.value;
+        updateItemStyleControls();
+        announce("Style for new strands, boxes, and circles updated");
+        return;
+      }
+
+      const lineStyle = strokeStyleSelect.value;
+      const strokeWidth = strokeWidthSelect.value;
+      const arrowSide = strokeArrowSideSelect.value;
+      const hasChanges = targets.some((target) => target.supportsStroke &&
+        (target.item.lineStyle !== lineStyle || target.item.strokeWidth !== strokeWidth)) ||
+        targets.some((target) => target.supportsArrow &&
+          (target.item.arrow !== strokeArrowInput.checked || target.item.arrowSide !== arrowSide));
+      if (!hasChanges) {
+        updateItemStyleControls();
+        return;
+      }
+      snapshot();
+      targets.forEach((target) => {
+        if (target.supportsStroke) {
+          target.item.lineStyle = lineStyle;
+          target.item.strokeWidth = strokeWidth;
+        }
+        if (target.supportsArrow) {
+          target.item.arrow = strokeArrowInput.checked;
+          target.item.arrowSide = arrowSide;
+        }
+      });
+      announce(`Style updated for ${targets.length} selected item${targets.length === 1 ? "" : "s"}`);
+      renderConnections();
+      updateActions();
+      updateItemStyleControls();
+    }
+
+    function newItemAppearance(includeArrow = false) {
+      const appearance = {
+        color: creationAppearance.color,
+        lineStyle: creationAppearance.lineStyle,
+        strokeWidth: creationAppearance.strokeWidth
+      };
+      if (includeArrow) {
+        appearance.arrow = creationAppearance.arrow;
+        appearance.arrowSide = creationAppearance.arrowSide;
+      }
+      return appearance;
     }
 
     function updateTextNodeEditor() {
@@ -2202,10 +2729,12 @@
         snapshot();
         if (points.has(selectedCellIndex)) {
           points.delete(selectedCellIndex);
+          pointColors.delete(selectedCellIndex);
         } else {
           bulletColors.delete(selectedCellIndex);
           cells[selectedCellIndex] = null;
           textNodeValues.delete(selectedCellIndex);
+          textNodePositions.delete(selectedCellIndex);
         }
         for (let index = connections.length - 1; index >= 0; index -= 1) {
           if (connectionUsesNode(connections[index], selectedCellIndex)) {
@@ -2239,7 +2768,9 @@
       selectedCellIndices.forEach((index) => {
         cells[index] = null;
         points.delete(index);
+        pointColors.delete(index);
         textNodeValues.delete(index);
+        textNodePositions.delete(index);
         bulletColors.delete(index);
       });
       for (let index = boxes.length - 1; index >= 0; index -= 1) {
@@ -2263,7 +2794,27 @@
 
     function endpointFor(index) {
       if (typeof index !== "number") return { x: index.x, y: index.y };
+      if (cells[index] === "text" && textNodePositions.has(index)) return textNodePositions.get(index);
       return { x: (index % columns) + 0.5, y: Math.floor(index / columns) + 0.5 };
+    }
+
+    function connectionGeometryIsValid(connection, positionFor = endpointFor) {
+      if (connection.kind === "multiplication") {
+        const [first, second] = connection.sources.map(positionFor);
+        const target = positionFor(connection.target);
+        const width = Math.abs(first.x - second.x);
+        return width > 0.001 &&
+          Math.abs(first.y - second.y) < 0.001 &&
+          Math.abs(target.y - first.y) > 0.001 &&
+          target.x >= Math.min(first.x, second.x) - 0.001 &&
+          target.x <= Math.max(first.x, second.x) + 0.001;
+      }
+      if (connection.kind === "evaluation" || connection.kind === "coevaluation") {
+        const first = positionFor(connection.from);
+        const second = positionFor(connection.to);
+        return Math.abs(first.y - second.y) < 0.001 && Math.abs(first.x - second.x) > 0.001;
+      }
+      return true;
     }
 
     function connectionEndpoints(connection) {
@@ -2318,8 +2869,7 @@
         return `M ${start.x} ${start.y} C ${firstControlX} ${start.y}, ${secondControlX} ${end.y}, ${end.x} ${end.y}`;
       }
       const direction = operation === "evaluation" ? -1 : 1;
-      const span = Math.hypot(end.x - start.x, end.y - start.y);
-      const depth = Math.min(2.2, Math.max(0.8, span * 0.35));
+      const depth = Math.abs(end.x - start.x) * 0.6;
       return `M ${start.x} ${start.y} C ${start.x} ${start.y + direction * depth}, ${end.x} ${end.y + direction * depth}, ${end.x} ${end.y}`;
     }
 
@@ -2330,7 +2880,7 @@
       const targetOffset = target.x - left.x;
       const junctionY = (left.y + target.y) * 0.5;
       let sourceArc;
-      if (Math.abs(targetOffset) < 0.001) {
+      if (Math.abs(targetOffset) <= 0.001) {
         sourceArc = [
           `M ${left.x} ${left.y}`,
           `L ${left.x} ${junctionY}`,
@@ -2338,7 +2888,7 @@
           `Q ${right.x} ${junctionY} ${right.x} ${left.y + offset * 0.2}`,
           `L ${right.x} ${right.y}`
         ];
-      } else if (Math.abs(targetOffset - width) < 0.001) {
+      } else if (Math.abs(targetOffset - width) <= 0.001) {
         sourceArc = [
           `M ${left.x} ${left.y}`,
           `L ${left.x} ${left.y + offset * 0.2}`,
@@ -2351,6 +2901,7 @@
           `M ${left.x} ${left.y}`,
           `L ${left.x} ${left.y + offset * 0.2}`,
           `Q ${left.x} ${junctionY} ${left.x + width * 0.25} ${junctionY}`,
+          `L ${left.x + width * 0.5} ${junctionY}`,
           `L ${left.x + width * 0.75} ${junctionY}`,
           `Q ${right.x} ${junctionY} ${right.x} ${left.y + offset * 0.2}`,
           `L ${right.x} ${right.y}`
@@ -2391,6 +2942,13 @@
         const width = sources[1].x - sources[0].x;
         const targetOffset = target.x - sources[0].x;
         const height = target.y - sources[0].y;
+        const command = Math.abs(targetOffset) <= 0.001
+          ? "dLMult"
+          : Math.abs(targetOffset - width) <= 0.001
+            ? "dRMult"
+            : "dMult";
+        const argumentsList = `{${connection.strokeWidth || "1.2"}}{${latexColor}}{${latexNumber(sources[0].x)}}{${latexNumber(sources[0].y)}}{${latexNumber(width)}}{${latexNumber(height)}}{${latexNumber(targetOffset)}}`;
+        return `\\${command}${isRaised ? "O" : ""}${latexStyleArgument(connection)}${argumentsList}`;
         const argumentsList = `{${latexNumber(sources[0].x)}}{${latexNumber(sources[0].y)}}{${latexNumber(width)}}{${latexNumber(height)}}{${latexColor}}`;
         if (Math.abs(targetOffset) < 0.001) return `\\dLMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}]${argumentsList}`;
         if (Math.abs(targetOffset - width) < 0.001) return `\\dRMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}]${argumentsList}`;
@@ -2400,6 +2958,10 @@
 
       const start = latexPoint(connection.from);
       const end = latexPoint(connection.to);
+      const strokeWidth = connection.strokeWidth || "1.2";
+      if (!curvedConnectionTypes.has(connection.kind)) {
+        const command = isRaised ? "dLineO" : "dLine";
+        return `\\${command}${latexStyleArgument(connection, true)}{${strokeWidth}}{${latexColor}}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}`;
       if (!curvedConnectionTypes.has(connection.kind)) {
         const command = isRaised ? "dLineO" : "dLine";
         return `\\${command}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
@@ -2408,6 +2970,34 @@
       if (smoothConnectionTypes.has(connection.kind)) {
         const isVertical = connection.kind === "smooth-line";
         const command = isVertical ? "sLine" : "hLine";
+        return `\\${command}${isRaised ? "O" : ""}${latexStyleArgument(connection, true)}{${strokeWidth}}{${latexColor}}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}`;
+      }
+
+      const reversed = start.x > end.x;
+      const [left, right] = reversed ? [end, start] : [start, end];
+      const isCap = connection.kind === "evaluation";
+      const command = isCap ? (isRaised ? "dCapO" : "dCap") : (isRaised ? "dCupO" : "dCup");
+      return `\\${command}${latexStyleArgument(connection, true, reversed)}{${strokeWidth}}{${latexColor}}{${latexNumber(left.x)}}{${latexNumber(left.y)}}{${latexNumber(right.x - left.x)}}`;
+    }
+
+    function latexStyleArgument(item, includeArrow = false, reverseDirection = false) {
+      const options = [];
+      if (item.lineStyle === "dotted" || item.lineStyle === "dashed") options.push(item.lineStyle);
+      if (includeArrow && item.arrow) {
+        const arrowAtStart = (item.arrowSide === "start") !== reverseDirection;
+        options.push(arrowAtStart ? "<-" : "->");
+      }
+      return options.length > 0 ? `[${options.join(",")}]` : "";
+    }
+
+    function latexStrokeOptions(item, fallbackWidth) {
+      const options = [`line width=${item.strokeWidth || fallbackWidth}pt`];
+      if (item.lineStyle === "dotted" || item.lineStyle === "dashed") options.push(item.lineStyle);
+      return options.join(",");
+    }
+
+    function latexForConnection(connection) {
+      return latexForConnectionCommand(connection);
         return `\\${command}${isRaised ? "O" : ""}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
       }
 
@@ -2430,9 +3020,9 @@
 
     function latexForDiagram() {
       const code = [
-        "% Uses the color and connection macros in diagram-output-template.tex or the complete LaTeX Environment above.",
-        "% Each grid step is 1.5cm wide and 1cm tall; screen rows are flipped for TikZ's upward y-axis.",
-        "\\begin{tikzpicture}[x=1.5cm,y=1cm, baseline=(current bounding box.center)]",
+        "% Uses the color and connection macros in string-diagram-studio.tex or the complete LaTeX Environment above.",
+        `% Each grid step is ${latexXScale}cm wide and ${latexYScale}cm tall; screen rows are flipped for TikZ's upward y-axis.`,
+        `\\begin{tikzpicture}[x=${latexXScale}cm,y=${latexYScale}cm, baseline=(current bounding box.center)]`,
         `  \\path[use as bounding box] (0,0) rectangle (${columns},${rows});`
       ];
 
@@ -2463,7 +3053,7 @@
         const point = latexPoint(index);
         if (operation === "bullet") {
           const latexColor = diagramColors[bulletColors.get(index) || "black"].latex;
-          code.push(`  \\filldraw[draw=${latexColor},fill=${latexColor}] ${latexCoordinate(point)} circle[radius=0.09cm];`);
+          code.push(`  \\dBull{${latexNumber(point.x)}}{${latexNumber(point.y)}}{${latexColor}}`);
         } else if (operation === "text") {
           const text = textNodeValues.get(index) ?? "";
           if (text.trim()) {
@@ -2505,6 +3095,9 @@
       if (connection.layer !== "up") return;
       const underlay = element.cloneNode(false);
       underlay.setAttribute("class", "wire-underlay");
+      underlay.style.removeProperty("stroke-width");
+      underlay.style.removeProperty("stroke-dasharray");
+      underlay.style.removeProperty("--connection-color");
       wireLayer.append(underlay);
       const pathLength = underlay.getTotalLength();
       if (pathLength > 0) {
@@ -2517,6 +3110,78 @@
     function appendConnectionHitArea(element) {
       const hitArea = element.cloneNode(false);
       hitArea.setAttribute("class", "wire-hit-area");
+      hitArea.removeAttribute("stroke-dasharray");
+      hitArea.style.removeProperty("stroke-width");
+      hitArea.style.removeProperty("stroke-dasharray");
+      hitArea.style.removeProperty("--connection-color");
+      wireLayer.append(hitArea);
+    }
+
+    function appendConnectionSelectionHighlight(element, isSelected) {
+      if (!isSelected) return;
+      const highlight = element.cloneNode(false);
+      highlight.setAttribute("class", "wire-selection-highlight");
+      highlight.removeAttribute("stroke-dasharray");
+      highlight.style.removeProperty("stroke-width");
+      highlight.style.removeProperty("stroke-dasharray");
+      highlight.style.removeProperty("--connection-color");
+      wireLayer.append(highlight);
+    }
+
+    function appendConnectionArrowHead(element, connection) {
+      if (!connection.arrow) return;
+      const pathLength = element.getTotalLength();
+      if (pathLength <= 0) return;
+
+      const rect = grid.getBoundingClientRect();
+      const scaleX = rect.width / columns;
+      const scaleY = rect.height / rows;
+      const isStartArrow = connection.arrowSide === "start";
+      const arrowTip = element.getPointAtLength(isStartArrow ? 0 : pathLength);
+      const tangentDistance = Math.min(0.15, pathLength);
+      const tangentPoint = element.getPointAtLength(isStartArrow
+        ? tangentDistance
+        : pathLength - tangentDistance);
+      const tipX = arrowTip.x * scaleX;
+      const tipY = arrowTip.y * scaleY;
+      const directionX = tipX - tangentPoint.x * scaleX;
+      const directionY = tipY - tangentPoint.y * scaleY;
+      const directionLength = Math.hypot(directionX, directionY);
+      if (directionLength === 0) return;
+
+      const unitX = directionX / directionLength;
+      const unitY = directionY / directionLength;
+      const baseX = tipX - unitX * 0.34 * scaleY;
+      const baseY = tipY - unitY * 0.34 * scaleY;
+      const halfWidth = 0.13 * scaleY;
+      const sideX = -unitY * halfWidth;
+      const sideY = unitX * halfWidth;
+      const head = document.createElementNS(wireLayer.namespaceURI, "path");
+      head.classList.add("connection-arrow-head");
+      head.setAttribute("d", [
+        `M ${tipX / scaleX} ${tipY / scaleY}`,
+        `L ${(baseX + sideX) / scaleX} ${(baseY + sideY) / scaleY}`,
+        `L ${(baseX - sideX) / scaleX} ${(baseY - sideY) / scaleY}`,
+        "Z"
+      ].join(" "));
+      head.style.fill = diagramColors[connection.color || "black"].css;
+      connectionArrowLayer.append(head);
+    }
+
+    function applyStrokeAppearance(element, item, fallbackWidth) {
+      const width = Number(item.strokeWidth || fallbackWidth);
+      element.style.strokeWidth = String(width * 1.1);
+      if (item.lineStyle === "dotted") {
+        element.style.strokeDasharray = `${Math.max(width * 0.7, 1)} ${Math.max(width * 2.5, 3)}`;
+      } else if (item.lineStyle === "dashed") {
+        element.style.strokeDasharray = `${Math.max(width * 3, 4)} ${Math.max(width * 2, 3)}`;
+      }
+    }
+
+    function renderConnections() {
+      if (window.MathJax?.typesetClear) window.MathJax.typesetClear([grid]);
+      wireLayer.replaceChildren();
+      connectionArrowLayer.replaceChildren();
       wireLayer.append(hitArea);
     }
 
@@ -2549,13 +3214,14 @@
       });
 
       circles.forEach((circle, index) => {
-        const element = document.createElementNS(wireLayer.namespaceURI, "circle");
+        const element = document.createElementNS(wireLayer.namespaceURI, "ellipse");
         element.classList.add("diagram-circle");
         if (index === selectedCircleIndex) element.classList.add("is-selected");
         element.dataset.circleId = String(circle.id);
         element.setAttribute("cx", String(circle.x));
         element.setAttribute("cy", String(circle.y));
-        element.setAttribute("r", String(circle.radius));
+        element.setAttribute("rx", String(circle.radius / latexXScale));
+        element.setAttribute("ry", String(circle.radius));
         element.style.setProperty("--circle-color", diagramColors[circle.color || "black"].css);
         wireLayer.append(element);
 
@@ -2563,9 +3229,9 @@
         if (label.trim()) {
           const labelElement = document.createElement("div");
           labelElement.classList.add("circle-label");
-          labelElement.style.left = `${((circle.x - circle.radius) / columns) * 100}%`;
+          labelElement.style.left = `${((circle.x - circle.radius / latexXScale) / columns) * 100}%`;
           labelElement.style.top = `${((circle.y - circle.radius) / rows) * 100}%`;
-          labelElement.style.width = `${(2 * circle.radius / columns) * 100}%`;
+          labelElement.style.width = `${(2 * circle.radius / latexXScale / columns) * 100}%`;
           labelElement.style.height = `${(2 * circle.radius / rows) * 100}%`;
           labelElement.textContent = `\\(${label}\\)`;
           grid.append(labelElement);
@@ -2635,8 +3301,10 @@
           curve.dataset.connectionIndex = String(index);
           curve.setAttribute("d", curvedConnectionPath(start, end, kind));
           curve.style.setProperty("--connection-color", connectionColor);
+          applyStrokeAppearance(curve, connection, 1.2);
           appendRaisedUnderlay(curve, connection);
           wireLayer.append(curve);
+          appendConnectionArrowHead(curve, connection);
           appendConnectionHitArea(curve);
         } else {
           const start = endpointFor(from);
@@ -2650,8 +3318,10 @@
           line.setAttribute("x2", String(end.x));
           line.setAttribute("y2", String(end.y));
           line.style.setProperty("--connection-color", connectionColor);
+          applyStrokeAppearance(line, connection, 1.2);
           appendRaisedUnderlay(line, connection);
           wireLayer.append(line);
+          appendConnectionArrowHead(line, connection);
           appendConnectionHitArea(line);
         }
       });
@@ -2673,6 +3343,7 @@
           curve.classList.add("wire-line", "wire-curve", "wire-preview");
           curve.setAttribute("d", curvedConnectionPath(start, wirePreview, wireStartConnectionKind));
           wireLayer.append(curve);
+          appendConnectionArrowHead(curve, creationAppearance);
         } else {
           const line = document.createElementNS(wireLayer.namespaceURI, "line");
           line.classList.add("wire-line", "wire-preview");
@@ -2681,8 +3352,10 @@
           line.setAttribute("x2", String(wirePreview.x));
           line.setAttribute("y2", String(wirePreview.y));
           wireLayer.append(line);
+          appendConnectionArrowHead(line, creationAppearance);
         }
       }
+      grid.append(connectionArrowLayer);
       updateCircleEditor();
       updateColorPalette();
       updateConnectionLayerControls();
@@ -2696,7 +3369,9 @@
         rows,
         cells: [...cells],
         points: [...points],
+        pointColors: [...pointColors.entries()],
         textNodes: [...textNodeValues.entries()],
+        textNodePositions: [...textNodePositions.entries()],
         bulletColors: [...bulletColors.entries()],
         connections: connections.map((connection) => connection.kind === "multiplication"
           ? { ...connection, sources: [...connection.sources] }
@@ -2712,8 +3387,12 @@
       cells = [...state.cells];
       points.clear();
       state.points.forEach((index) => points.add(index));
+      pointColors.clear();
+      state.pointColors.forEach(([index, color]) => pointColors.set(index, color));
       textNodeValues.clear();
       state.textNodes.forEach(([index, text]) => textNodeValues.set(index, text));
+      textNodePositions.clear();
+      state.textNodePositions.forEach(([index, position]) => textNodePositions.set(index, position));
       bulletColors.clear();
       state.bulletColors.forEach(([index, color]) => bulletColors.set(index, color));
       connections.splice(0, connections.length, ...state.connections);
@@ -2746,7 +3425,12 @@
         expandedCells[remapCell(index)] = operation;
       });
       const remappedPoints = [...points].map(remapCell);
+      const remappedPointColors = [...pointColors].map(([index, color]) => [remapCell(index), color]);
       const remappedTextNodes = [...textNodeValues].map(([index, text]) => [remapCell(index), text]);
+      const remappedTextNodePositions = [...textNodePositions].map(([index, position]) => [
+        remapCell(index),
+        { ...position, [axis]: position[axis] + coordinateOffset }
+      ]);
       const remappedBulletColors = [...bulletColors].map(([index, color]) => [remapCell(index), color]);
       const remappedGroupSelectedCells = [...groupSelectedCells].map(remapCell);
       const remappedGroupSelectedEndpoints = [...groupSelectedEndpoints.values()].map(remapEndpoint);
@@ -2764,8 +3448,12 @@
       cells = expandedCells;
       points.clear();
       remappedPoints.forEach((index) => points.add(index));
+      pointColors.clear();
+      remappedPointColors.forEach(([index, color]) => pointColors.set(index, color));
       textNodeValues.clear();
       remappedTextNodes.forEach(([index, text]) => textNodeValues.set(index, text));
+      textNodePositions.clear();
+      remappedTextNodePositions.forEach(([index, position]) => textNodePositions.set(index, position));
       bulletColors.clear();
       remappedBulletColors.forEach(([index, color]) => bulletColors.set(index, color));
       groupSelectedCells.clear();
@@ -2826,9 +3514,9 @@
       });
       boxes.forEach((box) => includeBounds(box.x, box.y, box.x + box.width, box.y + box.height));
       circles.forEach((circle) => includeBounds(
-        circle.x - circle.radius,
+        circle.x - circle.radius / latexXScale,
         circle.y - circle.radius,
-        circle.x + circle.radius,
+        circle.x + circle.radius / latexXScale,
         circle.y + circle.radius
       ));
 
@@ -2872,7 +3560,12 @@
         if (operation !== null) trimmedCells[remapCell(index)] = operation;
       });
       const trimmedPoints = [...points].map(remapCell);
+      const trimmedPointColors = [...pointColors].map(([index, color]) => [remapCell(index), color]);
       const trimmedTextNodes = [...textNodeValues].map(([index, text]) => [remapCell(index), text]);
+      const trimmedTextNodePositions = [...textNodePositions].map(([index, position]) => [
+        remapCell(index),
+        { x: position.x - bounds.left, y: position.y - bounds.top }
+      ]);
       const trimmedBulletColors = [...bulletColors].map(([index, color]) => [remapCell(index), color]);
 
       connections.forEach((connection) => mapConnectionEndpoints(connection, remapEndpoint));
@@ -2889,8 +3582,12 @@
       cells = trimmedCells;
       points.clear();
       trimmedPoints.forEach((index) => points.add(index));
+      pointColors.clear();
+      trimmedPointColors.forEach(([index, color]) => pointColors.set(index, color));
       textNodeValues.clear();
       trimmedTextNodes.forEach(([index, text]) => textNodeValues.set(index, text));
+      textNodePositions.clear();
+      trimmedTextNodePositions.forEach(([index, position]) => textNodePositions.set(index, position));
       bulletColors.clear();
       trimmedBulletColors.forEach(([index, color]) => bulletColors.set(index, color));
       setDefaultMode();
@@ -2900,7 +3597,11 @@
     function updateActions() {
       undoButton.disabled = undoStack.length === 0;
       redoButton.disabled = redoStack.length === 0;
-      clearButton.disabled = cells.every((operation) => operation === null) && points.size === 0 && connections.length === 0 && boxes.length === 0 && circles.length === 0;
+      const graphIsEmpty = cells.every((operation) => operation === null) && points.size === 0 &&
+        connections.length === 0 && boxes.length === 0 && circles.length === 0;
+      clearButton.disabled = graphIsEmpty;
+      mirrorVerticalButton.disabled = graphIsEmpty;
+      mirrorHorizontalButton.disabled = graphIsEmpty;
       const trimBounds = getTrimBounds();
       trimCanvasButton.disabled = !trimBounds ||
         (trimBounds.left === 0 && trimBounds.top === 0 && trimBounds.right === columns && trimBounds.bottom === rows);
@@ -2929,10 +3630,19 @@
         if (!type) return;
         const node = { cell, type };
         if (type === "text") node.label = savedTextNodes.get(cell) ?? "";
+        if (type === "text" && textNodePositions.has(cell)) {
+          const position = textNodePositions.get(cell);
+          node.x = position.x;
+          node.y = position.y;
+        }
         if (type === "bullet" && bulletColors.has(cell)) node.color = bulletColors.get(cell);
         nodes.push(node);
       });
-      points.forEach((cell) => nodes.push({ cell, type: "point" }));
+      points.forEach((cell) => {
+        const node = { cell, type: "point" };
+        if (pointColors.has(cell)) node.color = pointColors.get(cell);
+        nodes.push(node);
+      });
       nodes.sort((first, second) => first.cell - second.cell);
       return {
         format: "string-diagram-studio",
@@ -2981,6 +3691,26 @@
       const isFiniteNumber = (value) => typeof value === "number" && Number.isFinite(value);
       const isHalfStep = (value) => isFiniteNumber(value) && Math.abs(value * 2 - Math.round(value * 2)) < 0.001;
       const isColor = (value) => typeof value === "string" && Object.prototype.hasOwnProperty.call(diagramColors, value);
+      const readStrokeAppearance = (item, allowArrow, name) => {
+        if (item.lineStyle !== undefined && !["solid", "dotted", "dashed"].includes(item.lineStyle)) {
+          fail(`${name} has an unsupported line style.`);
+        }
+        if (item.strokeWidth !== undefined && !["0.4", "0.8", "1.2", "2", "3"].includes(item.strokeWidth)) {
+          fail(`${name} has an unsupported stroke thickness.`);
+        }
+        if (item.arrow !== undefined && (!allowArrow || typeof item.arrow !== "boolean")) {
+          fail(`${name} has an unsupported arrow setting.`);
+        }
+        if (item.arrowSide !== undefined && (!allowArrow || !["start", "end"].includes(item.arrowSide))) {
+          fail(`${name} has an unsupported arrow side.`);
+        }
+        const appearance = {};
+        if (item.lineStyle !== undefined) appearance.lineStyle = item.lineStyle;
+        if (item.strokeWidth !== undefined) appearance.strokeWidth = item.strokeWidth;
+        if (item.arrow !== undefined) appearance.arrow = item.arrow;
+        if (item.arrowSide !== undefined) appearance.arrowSide = item.arrowSide;
+        return appearance;
+      };
       const within = (value, maximum) => value >= -0.001 && value <= maximum + 0.001;
 
       if (!isRecord(data) || data.format !== "string-diagram-studio" || ![1, 2].includes(data.version)) {
@@ -3001,6 +3731,8 @@
       const savedCells = Array(cellCount).fill(null);
       const savedPoints = new Set();
       const savedTextNodes = new Map();
+      const savedTextNodePositions = new Map();
+      const savedPointColors = new Map();
       const savedBulletColors = new Map();
       if (data.version === 1) {
         if (!Array.isArray(data.cells) || data.cells.length !== cellCount) {
@@ -3046,6 +3778,10 @@
           seenCells.add(index);
           if (node.type === "point") {
             savedPoints.add(index);
+            if (node.color !== undefined) {
+              if (!isColor(node.color)) fail("An orientation point has an unsupported color.");
+              savedPointColors.set(index, node.color);
+            }
             return;
           }
           if (!validCellKinds.has(node.type)) fail("The save file contains an unknown node type.");
@@ -3053,6 +3789,17 @@
           if (node.type === "text") {
             if (typeof node.label !== "string" || node.label.length > 256) fail("A text-node label is invalid or too long.");
             savedTextNodes.set(index, node.label);
+            if (node.x !== undefined || node.y !== undefined) {
+              const column = index % savedColumns;
+              const row = Math.floor(index / savedColumns);
+              if (!isHalfStep(node.x) || !isHalfStep(node.y) ||
+                !within(node.x, savedColumns) || !within(node.y, savedRows) ||
+                node.x < column - 0.001 || node.x > column + 1 + 0.001 ||
+                node.y < row - 0.001 || node.y > row + 1 + 0.001) {
+                fail("A text node has invalid coordinates.");
+              }
+              savedTextNodePositions.set(index, { x: node.x, y: node.y });
+            }
           }
           if (node.type === "bullet" && node.color !== undefined) {
             if (!isColor(node.color)) fail("A bullet has an unsupported color.");
@@ -3090,7 +3837,7 @@
         const id = validateShapeId(circle.id, circleIds, "circle");
         const { x, y, radius } = circle;
         if (![x, y, radius].every(isHalfStep) || radius <= 0 ||
-          !within(x - radius, savedColumns) || !within(x + radius, savedColumns) ||
+          !within(x - radius / latexXScale, savedColumns) || !within(x + radius / latexXScale, savedColumns) ||
           !within(y - radius, savedRows) || !within(y + radius, savedRows)) {
           fail("A circle has invalid coordinates or dimensions.");
         }
@@ -3100,10 +3847,10 @@
       });
       const boxesById = new Map(savedBoxes.map((box) => [box.id, box]));
       const circlesById = new Map(savedCircles.map((circle) => [circle.id, circle]));
-      const isOnHalfStep = (value) => Math.abs(value * 2 - Math.round(value * 2)) < 0.001;
       const validateEndpoint = (endpoint) => {
         if (isInteger(endpoint)) {
           validateCellIndex(endpoint);
+          if (savedCells[endpoint] === null && !savedPoints.has(endpoint)) savedPoints.add(endpoint);
           return endpoint;
         }
         if (!isRecord(endpoint) || !isFiniteNumber(endpoint.x) || !isFiniteNumber(endpoint.y) ||
@@ -3112,7 +3859,7 @@
         }
         if (isInteger(endpoint.boxId) && !Object.prototype.hasOwnProperty.call(endpoint, "circleId")) {
           const box = boxesById.get(endpoint.boxId);
-          if (!box || !isOnHalfStep(endpoint.x) || !isOnHalfStep(endpoint.y) ||
+          if (!box || !isHalfStep(endpoint.x) || !isHalfStep(endpoint.y) ||
             endpoint.x < box.x - 0.001 || endpoint.x > box.x + box.width + 0.001 ||
             endpoint.y < box.y - 0.001 || endpoint.y > box.y + box.height + 0.001 ||
             Math.min(Math.abs(endpoint.x - box.x), Math.abs(endpoint.x - box.x - box.width),
@@ -3129,19 +3876,26 @@
           const expected = {
             north: { x: circle.x, y: circle.y - circle.radius },
             south: { x: circle.x, y: circle.y + circle.radius },
-            east: { x: circle.x + circle.radius, y: circle.y },
-            west: { x: circle.x - circle.radius, y: circle.y }
+            east: { x: circle.x + circle.radius / latexXScale, y: circle.y },
+            west: { x: circle.x - circle.radius / latexXScale, y: circle.y }
           }[endpoint.side];
-          if (Math.abs(endpoint.x - expected.x) > 0.001 || Math.abs(endpoint.y - expected.y) > 0.001) {
+          const legacyX = endpoint.side === "east" ? circle.x + circle.radius
+            : endpoint.side === "west" ? circle.x - circle.radius : expected.x;
+          if (Math.abs(endpoint.y - expected.y) > 0.001 ||
+            (Math.abs(endpoint.x - expected.x) > 0.001 && Math.abs(endpoint.x - legacyX) > 0.001)) {
             fail("A connection's circle port coordinates do not match its side.");
           }
-          return { circleId: endpoint.circleId, side: endpoint.side, x: endpoint.x, y: endpoint.y };
+          return { circleId: endpoint.circleId, side: endpoint.side, x: expected.x, y: expected.y };
         }
         fail("A connection endpoint has an unknown shape type.");
       };
-      const endpointPositionInSavedDiagram = (endpoint) => typeof endpoint === "number"
-        ? { x: endpoint % savedColumns + 0.5, y: Math.floor(endpoint / savedColumns) + 0.5 }
-        : { x: endpoint.x, y: endpoint.y };
+      const endpointPositionInSavedDiagram = (endpoint) => {
+        if (typeof endpoint !== "number") return { x: endpoint.x, y: endpoint.y };
+        return savedTextNodePositions.get(endpoint) ?? {
+          x: endpoint % savedColumns + 0.5,
+          y: Math.floor(endpoint / savedColumns) + 0.5
+        };
+      };
 
       if (!Array.isArray(data.connections) || data.connections.length > 100000) fail("The connection data is invalid or too large.");
       const savedConnections = data.connections.map((connection) => {
@@ -3158,10 +3912,12 @@
           if (sourceKeys[0] === sourceKeys[1] || sourceKeys.includes(endpointKey(target))) fail("A multiplication must use distinct source and target nodes.");
           const [first, second] = sources.map(endpointPositionInSavedDiagram);
           const targetPosition = endpointPositionInSavedDiagram(target);
-          if (Math.abs(first.y - second.y) > 0.001 ||
+          if (Math.abs(first.x - second.x) < 0.001 ||
+            Math.abs(first.y - second.y) > 0.001 ||
+            Math.abs(targetPosition.y - first.y) < 0.001 ||
             targetPosition.x < Math.min(first.x, second.x) - 0.001 ||
             targetPosition.x > Math.max(first.x, second.x) + 0.001) {
-            fail("A multiplication violates its source-row or target-position constraints.");
+            fail("A multiplication needs distinct same-row sources and a target between them on a different row.");
           }
           return { kind: "multiplication", sources, target, ...common };
         }
@@ -3170,6 +3926,13 @@
         const from = validateEndpoint(connection.from);
         const to = validateEndpoint(connection.to);
         if (endpointKey(from) === endpointKey(to)) fail("A connection must join two different nodes.");
+        if (kind === "evaluation" || kind === "coevaluation") {
+          const first = endpointPositionInSavedDiagram(from);
+          const second = endpointPositionInSavedDiagram(to);
+          if (Math.abs(first.y - second.y) > 0.001 || Math.abs(first.x - second.x) < 0.001) {
+            fail("A cup or cap must join two distinct nodes on the same row.");
+          }
+        }
         return { from, to, kind, ...common };
       });
       const nextBoxIdValue = data.nextBoxId;
@@ -3188,7 +3951,9 @@
         rows: savedRows,
         cells: savedCells,
         points: savedPoints,
+        pointColors: savedPointColors,
         textNodes: savedTextNodes,
+        textNodePositions: savedTextNodePositions,
         bulletColors: savedBulletColors,
         connections: savedConnections,
         boxes: savedBoxes,
@@ -3204,8 +3969,12 @@
       cells = state.cells;
       points.clear();
       state.points.forEach((index) => points.add(index));
+      pointColors.clear();
+      state.pointColors.forEach((color, index) => pointColors.set(index, color));
       textNodeValues.clear();
       state.textNodes.forEach((text, index) => textNodeValues.set(index, text));
+      textNodePositions.clear();
+      state.textNodePositions.forEach((position, index) => textNodePositions.set(index, position));
       bulletColors.clear();
       state.bulletColors.forEach((color, index) => bulletColors.set(index, color));
       connections.length = 0;
@@ -3269,6 +4038,15 @@
       return endpoints;
     }
 
+    function circlePortEndpoints(circle) {
+      return [
+        { circleId: circle.id, side: "north", x: circle.x, y: circle.y - circle.radius },
+        { circleId: circle.id, side: "south", x: circle.x, y: circle.y + circle.radius },
+        { circleId: circle.id, side: "east", x: circle.x + circle.radius / latexXScale, y: circle.y },
+        { circleId: circle.id, side: "west", x: circle.x - circle.radius / latexXScale, y: circle.y }
+      ];
+    }
+
     function selectNodesInRegion(start, end) {
       clearSelection();
       cells.forEach((operation, index) => {
@@ -3284,12 +4062,7 @@
         }
       });
       circles.forEach((circle) => {
-        const endpoints = [
-          { circleId: circle.id, side: "north", x: circle.x, y: circle.y - circle.radius },
-          { circleId: circle.id, side: "south", x: circle.x, y: circle.y + circle.radius },
-          { circleId: circle.id, side: "east", x: circle.x + circle.radius, y: circle.y },
-          { circleId: circle.id, side: "west", x: circle.x - circle.radius, y: circle.y }
-        ];
+        const endpoints = circlePortEndpoints(circle);
         if (endpoints.every((endpoint) => isWithinSelection(endpoint, start, end))) {
           endpoints.forEach((endpoint) => {
             groupSelectedEndpoints.set(endpointKey(endpoint), endpoint);
@@ -3312,16 +4085,402 @@
       return { cellIndices, boxIds, circleIds };
     }
 
+    function isTextOnlySelection(selection) {
+      return selection.cellIndices.size > 0 &&
+        [...selection.cellIndices].every((index) => cells[index] === "text") &&
+        selection.boxIds.size === 0 && selection.circleIds.size === 0;
+    }
+
     function moveStepForSelection(selection = getMoveSelection()) {
-      return selection.boxIds.size > 0 && selection.cellIndices.size === 0 && selection.circleIds.size === 0
-        ? 0.5
-        : 1;
+      const boxOnlySelection = selection.boxIds.size > 0 &&
+        selection.cellIndices.size === 0 && selection.circleIds.size === 0;
+      return isTextOnlySelection(selection) || boxOnlySelection ? 0.5 : 1;
     }
 
     function cellIndexAfterMove(index, dx, dy) {
       const column = index % columns;
       const row = Math.floor(index / columns);
       return (row + dy) * columns + column + dx;
+    }
+
+    function textPositionAfterMove(index, dx, dy) {
+      const position = endpointFor(index);
+      return { x: position.x + dx, y: position.y + dy };
+    }
+
+    // Text nodes keep a cell index for selection even when their position is on an edge.
+    function cellIndexForTextPosition(position) {
+      const column = Math.min(columns - 1, Math.max(0, Math.floor(position.x)));
+      const row = Math.min(rows - 1, Math.max(0, Math.floor(position.y)));
+      return row * columns + column;
+    }
+
+    function copySelectionToClipboard() {
+      const selectedCells = new Set(groupSelectedCells);
+      if (selectedCellIndex !== null) selectedCells.add(selectedCellIndex);
+      const selectedBoxIds = new Set(groupSelectedEndpoints.values()
+        .filter((endpoint) => endpoint.boxId !== undefined)
+        .map((endpoint) => endpoint.boxId));
+      const selectedCircleIds = new Set(groupSelectedEndpoints.values()
+        .filter((endpoint) => endpoint.circleId !== undefined)
+        .map((endpoint) => endpoint.circleId));
+      if (selectedBoxIndex !== null && boxes[selectedBoxIndex]) selectedBoxIds.add(boxes[selectedBoxIndex].id);
+      if (selectedCircleIndex !== null && circles[selectedCircleIndex]) selectedCircleIds.add(circles[selectedCircleIndex].id);
+
+      const selectedConnections = new Set();
+      if (selectedConnectionIndex !== null && connections[selectedConnectionIndex]) {
+        selectedConnections.add(selectedConnectionIndex);
+        connectionEndpoints(connections[selectedConnectionIndex]).forEach((endpoint) => {
+          if (typeof endpoint === "number") selectedCells.add(endpoint);
+          else if (endpoint.boxId !== undefined) selectedBoxIds.add(endpoint.boxId);
+          else selectedCircleIds.add(endpoint.circleId);
+        });
+      }
+
+      const endpointIsSelected = (endpoint) => typeof endpoint === "number"
+        ? selectedCells.has(endpoint)
+        : endpoint.boxId !== undefined
+          ? selectedBoxIds.has(endpoint.boxId)
+          : selectedCircleIds.has(endpoint.circleId);
+      if (selectedConnectionIndex === null) {
+        connections.forEach((connection, index) => {
+          if (connectionEndpoints(connection).every(endpointIsSelected)) selectedConnections.add(index);
+        });
+      }
+
+      const selectedBoxes = boxes.filter((box) => selectedBoxIds.has(box.id)).map((box) => ({
+        ...box,
+        text: selectedBoxIndex !== null && box.id === boxes[selectedBoxIndex].id && boxLabelDraft !== null
+          ? boxLabelDraft
+          : box.text
+      }));
+      const selectedCircles = circles.filter((circle) => selectedCircleIds.has(circle.id)).map((circle) => ({
+        ...circle,
+        text: selectedCircleIndex !== null && circle.id === circles[selectedCircleIndex].id && circleLabelDraft !== null
+          ? circleLabelDraft
+          : circle.text
+      }));
+      const nodes = [...selectedCells].filter((index) => cells[index] || points.has(index)).map((index) => ({
+        index,
+        type: points.has(index) ? "point" : cells[index],
+        position: endpointFor(index),
+        label: index === selectedCellIndex && textNodeDraft !== null
+          ? textNodeDraft
+          : textNodeValues.get(index) ?? "",
+        color: points.has(index) ? pointColors.get(index) : bulletColors.get(index)
+      }));
+      const bounds = { left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity };
+      const includePoint = (point) => {
+        bounds.left = Math.min(bounds.left, point.x);
+        bounds.top = Math.min(bounds.top, point.y);
+        bounds.right = Math.max(bounds.right, point.x);
+        bounds.bottom = Math.max(bounds.bottom, point.y);
+      };
+      nodes.forEach((node) => includePoint(node.position));
+      selectedBoxes.forEach((box) => {
+        includePoint({ x: box.x, y: box.y });
+        includePoint({ x: box.x + box.width, y: box.y + box.height });
+      });
+      selectedCircles.forEach((circle) => {
+        includePoint({ x: circle.x - circle.radius / latexXScale, y: circle.y - circle.radius });
+        includePoint({ x: circle.x + circle.radius / latexXScale, y: circle.y + circle.radius });
+      });
+      selectedConnections.forEach((index) => {
+        connectionEndpoints(connections[index]).forEach((endpoint) => includePoint(endpointFor(endpoint)));
+      });
+      if (!Number.isFinite(bounds.left)) {
+        announce("Select diagram items before copying");
+        return false;
+      }
+
+      const serializeEndpoint = (endpoint) => typeof endpoint === "number"
+        ? { nodeIndex: endpoint }
+        : {
+          ...endpoint,
+          ...(endpoint.boxId !== undefined ? { shapeType: "box" } : { shapeType: "circle" }),
+          x: endpoint.x - bounds.left,
+          y: endpoint.y - bounds.top
+        };
+      const copiedConnections = [...selectedConnections].map((index) => {
+        const connection = connections[index];
+        return connection.kind === "multiplication"
+          ? {
+            ...connection,
+            sources: connection.sources.map(serializeEndpoint),
+            target: serializeEndpoint(connection.target)
+          }
+          : {
+            ...connection,
+            from: serializeEndpoint(connection.from),
+            to: serializeEndpoint(connection.to)
+          };
+      });
+      diagramClipboard = {
+        bounds: { width: bounds.right - bounds.left, height: bounds.bottom - bounds.top },
+        nodes: nodes.map((node) => ({
+          ...node,
+          x: node.position.x - bounds.left,
+          y: node.position.y - bounds.top
+        })),
+        boxes: selectedBoxes.map((box) => ({ ...box, x: box.x - bounds.left, y: box.y - bounds.top })),
+        circles: selectedCircles.map((circle) => ({ ...circle, x: circle.x - bounds.left, y: circle.y - bounds.top })),
+        connections: copiedConnections,
+        selectedConnectionOnly: selectedConnectionIndex !== null
+      };
+      announce(`Copied ${nodes.length + selectedBoxes.length + selectedCircles.length} diagram item${nodes.length + selectedBoxes.length + selectedCircles.length === 1 ? "" : "s"}`);
+      return true;
+    }
+
+    function pasteClipboardAtPointer() {
+      if (!diagramClipboard) {
+        announce("Copy diagram items before pasting");
+        return;
+      }
+      const pointer = lastGridPointer || { x: columns / 2, y: rows / 2 };
+      const hasCellCenteredNodes = diagramClipboard.nodes.some((node) => node.type !== "text");
+      let dx;
+      let dy;
+      if (hasCellCenteredNodes) {
+        const referenceNode = diagramClipboard.nodes.find((node) => node.type !== "text");
+        const alignCenterToNodeGrid = (coordinate, size, nodePosition) => {
+          const desiredOffset = coordinate - size / 2;
+          const remainder = 0.5 - nodePosition - Math.floor(0.5 - nodePosition);
+          return remainder + Math.round(desiredOffset - remainder);
+        };
+        dx = alignCenterToNodeGrid(pointer.x, diagramClipboard.bounds.width, referenceNode.x);
+        dy = alignCenterToNodeGrid(pointer.y, diagramClipboard.bounds.height, referenceNode.y);
+      } else {
+        dx = Math.round((pointer.x - diagramClipboard.bounds.width / 2) * 2) / 2;
+        dy = Math.round((pointer.y - diagramClipboard.bounds.height / 2) * 2) / 2;
+      }
+
+      const allBounds = {
+        left: Infinity, top: Infinity, right: -Infinity, bottom: -Infinity
+      };
+      diagramClipboard.nodes.forEach((node) => {
+        allBounds.left = Math.min(allBounds.left, node.x);
+        allBounds.top = Math.min(allBounds.top, node.y);
+        allBounds.right = Math.max(allBounds.right, node.x);
+        allBounds.bottom = Math.max(allBounds.bottom, node.y);
+      });
+      diagramClipboard.boxes.forEach((box) => {
+        allBounds.left = Math.min(allBounds.left, box.x);
+        allBounds.top = Math.min(allBounds.top, box.y);
+        allBounds.right = Math.max(allBounds.right, box.x + box.width);
+        allBounds.bottom = Math.max(allBounds.bottom, box.y + box.height);
+      });
+      diagramClipboard.circles.forEach((circle) => {
+        allBounds.left = Math.min(allBounds.left, circle.x - circle.radius / latexXScale);
+        allBounds.top = Math.min(allBounds.top, circle.y - circle.radius);
+        allBounds.right = Math.max(allBounds.right, circle.x + circle.radius / latexXScale);
+        allBounds.bottom = Math.max(allBounds.bottom, circle.y + circle.radius);
+      });
+      const clampOffset = (offset, start, end, limit) => {
+        const step = hasCellCenteredNodes ? 1 : 0.5;
+        const remainder = hasCellCenteredNodes ? offset - Math.round(offset) : 0;
+        const minimum = Math.ceil(((-start - remainder) / step) - 0.000001);
+        const maximum = Math.floor(((limit - end - remainder) / step) + 0.000001);
+        const steps = Math.max(minimum, Math.min(maximum, Math.round((offset - remainder) / step)));
+        return remainder + steps * step;
+      };
+      dx = clampOffset(dx, allBounds.left, allBounds.right, columns);
+      dy = clampOffset(dy, allBounds.top, allBounds.bottom, rows);
+
+      const newNodeIndices = new Map();
+      const occupiedIndices = new Set();
+      const occupiedPositions = new Set();
+      const plannedNodes = diagramClipboard.nodes.map((node) => {
+        const position = { x: node.x + dx, y: node.y + dy };
+        const positionKey = `${position.x}:${position.y}`;
+        const positionAlreadyUsed = occupiedPositions.has(positionKey) ||
+          cells.some((type, existingIndex) => type && endpointFor(existingIndex).x === position.x && endpointFor(existingIndex).y === position.y) ||
+          [...points].some((existingIndex) => endpointFor(existingIndex).x === position.x && endpointFor(existingIndex).y === position.y);
+        if (positionAlreadyUsed) {
+          announce("The paste location already contains a node");
+          return null;
+        }
+        const index = cellIndexForTextPosition(position);
+        if (occupiedIndices.has(index) || hasNode(index)) {
+          announce("The paste location already contains a node in that grid cell");
+          return null;
+        }
+        occupiedIndices.add(index);
+        occupiedPositions.add(positionKey);
+        newNodeIndices.set(node.index, index);
+        return { ...node, index, position };
+      });
+      if (plannedNodes.some((node) => node === null)) return;
+
+      setDefaultMode();
+      snapshot();
+      clearSelection();
+      const newBoxIds = new Map();
+      const newCircleIds = new Map();
+      const pastedBoxes = diagramClipboard.boxes.map((box) => {
+        const id = nextBoxId++;
+        newBoxIds.set(box.id, id);
+        return { ...box, id, x: box.x + dx, y: box.y + dy };
+      });
+      const pastedCircles = diagramClipboard.circles.map((circle) => {
+        const id = nextCircleId++;
+        newCircleIds.set(circle.id, id);
+        return { ...circle, id, x: circle.x + dx, y: circle.y + dy };
+      });
+      plannedNodes.forEach((node) => {
+        if (node.type === "point") {
+          points.add(node.index);
+          if (node.color) pointColors.set(node.index, node.color);
+        } else {
+          cells[node.index] = node.type;
+          if (node.type === "text") {
+            textNodeValues.set(node.index, node.label);
+            const center = { x: node.index % columns + 0.5, y: Math.floor(node.index / columns) + 0.5 };
+            if (node.position.x !== center.x || node.position.y !== center.y) {
+              textNodePositions.set(node.index, node.position);
+            }
+          }
+          if (node.type === "bullet" && node.color) bulletColors.set(node.index, node.color);
+        }
+        groupSelectedCells.add(node.index);
+      });
+      boxes.push(...pastedBoxes);
+      circles.push(...pastedCircles);
+      pastedBoxes.forEach((box) => boxPortEndpoints(box).forEach((endpoint) => {
+        groupSelectedEndpoints.set(endpointKey(endpoint), endpoint);
+      }));
+      pastedCircles.forEach((circle) => {
+        circlePortEndpoints(circle).forEach((endpoint) => groupSelectedEndpoints.set(endpointKey(endpoint), endpoint));
+      });
+
+      const pasteEndpoint = (endpoint) => {
+        if (endpoint.nodeIndex !== undefined) return newNodeIndices.get(endpoint.nodeIndex);
+        if (endpoint.shapeType === "box") {
+          return { boxId: newBoxIds.get(endpoint.boxId), x: endpoint.x + dx, y: endpoint.y + dy };
+        }
+        return {
+          circleId: newCircleIds.get(endpoint.circleId),
+          side: endpoint.side,
+          x: endpoint.x + dx,
+          y: endpoint.y + dy
+        };
+      };
+      const firstPastedConnectionIndex = connections.length;
+      diagramClipboard.connections.forEach((connection) => {
+        const pastedConnection = connection.kind === "multiplication"
+          ? {
+            ...connection,
+            sources: connection.sources.map(pasteEndpoint),
+            target: pasteEndpoint(connection.target)
+          }
+          : { ...connection, from: pasteEndpoint(connection.from), to: pasteEndpoint(connection.to) };
+        connections.push(pastedConnection);
+      });
+      if (diagramClipboard.selectedConnectionOnly && diagramClipboard.connections.length) {
+        selectedConnectionIndex = firstPastedConnectionIndex;
+      }
+      updateBoxEditor();
+      updateCircleEditor();
+      updateTextNodeEditor();
+      renderGrid();
+      announce("Pasted diagram items at the pointer; the pasted items remain selected");
+    }
+
+    function mirrorDiagram(direction) {
+      const flipX = direction === "left-right";
+      const flipPoint = (point) => ({
+        x: flipX ? columns - point.x : point.x,
+        y: flipX ? point.y : rows - point.y
+      });
+      const occupied = new Set();
+      const indexMap = new Map();
+      const mirroredPositions = new Map();
+      const nodes = [];
+      cells.forEach((type, index) => {
+        if (type) nodes.push({ index, type, position: flipPoint(endpointFor(index)) });
+      });
+      points.forEach((index) => nodes.push({ index, type: "point", position: flipPoint(endpointFor(index)) }));
+      for (const node of nodes) {
+        const newIndex = cellIndexForTextPosition(node.position);
+        if (occupied.has(newIndex)) {
+          announce("Cannot mirror this graph because nodes would occupy the same grid cell");
+          return;
+        }
+        occupied.add(newIndex);
+        indexMap.set(node.index, newIndex);
+        if (node.type === "text") mirroredPositions.set(newIndex, node.position);
+      }
+
+      snapshot();
+      const mirroredCells = Array(cells.length).fill(null);
+      const mirroredPoints = new Set();
+      const mirroredPointColors = new Map();
+      const mirroredTextValues = new Map();
+      const mirroredBulletColors = new Map();
+      nodes.forEach((node) => {
+        const index = indexMap.get(node.index);
+        if (node.type === "point") {
+          mirroredPoints.add(index);
+          if (pointColors.has(node.index)) mirroredPointColors.set(index, pointColors.get(node.index));
+        } else {
+          mirroredCells[index] = node.type;
+          if (node.type === "text" && textNodeValues.has(node.index)) {
+            mirroredTextValues.set(index, textNodeValues.get(node.index));
+          }
+          if (node.type === "bullet" && bulletColors.has(node.index)) {
+            mirroredBulletColors.set(index, bulletColors.get(node.index));
+          }
+        }
+      });
+      cells = mirroredCells;
+      points.clear();
+      mirroredPoints.forEach((index) => points.add(index));
+      pointColors.clear();
+      mirroredPointColors.forEach((color, index) => pointColors.set(index, color));
+      textNodeValues.clear();
+      mirroredTextValues.forEach((value, index) => textNodeValues.set(index, value));
+      textNodePositions.clear();
+      mirroredPositions.forEach((position, index) => {
+        const center = { x: index % columns + 0.5, y: Math.floor(index / columns) + 0.5 };
+        if (position.x !== center.x || position.y !== center.y) textNodePositions.set(index, position);
+      });
+      bulletColors.clear();
+      mirroredBulletColors.forEach((color, index) => bulletColors.set(index, color));
+      boxes.forEach((box) => {
+        if (flipX) box.x = columns - box.x - box.width;
+        else box.y = rows - box.y - box.height;
+      });
+      circles.forEach((circle) => {
+        if (flipX) circle.x = columns - circle.x;
+        else circle.y = rows - circle.y;
+      });
+      const mirrorEndpoint = (endpoint) => {
+        if (typeof endpoint === "number") return indexMap.get(endpoint);
+        const point = flipPoint(endpoint);
+        if (endpoint.boxId !== undefined) return { ...endpoint, ...point };
+        const side = flipX
+          ? ({ east: "west", west: "east" }[endpoint.side] || endpoint.side)
+          : ({ north: "south", south: "north" }[endpoint.side] || endpoint.side);
+        return { ...endpoint, ...point, side };
+      };
+      connections.forEach((connection) => {
+        mapConnectionEndpoints(connection, mirrorEndpoint);
+        if (!flipX && (connection.kind === "evaluation" || connection.kind === "coevaluation")) {
+          connection.kind = connection.kind === "evaluation" ? "coevaluation" : "evaluation";
+        }
+      });
+      multiplicationSelection = multiplicationSelection.map(mirrorEndpoint);
+      if (connectionSelectionStart) {
+        connectionSelectionStart.endpoint = mirrorEndpoint(connectionSelectionStart.endpoint);
+      }
+      const mirroredSelectedCells = [...groupSelectedCells].map((index) => indexMap.get(index));
+      groupSelectedCells.clear();
+      mirroredSelectedCells.forEach((index) => groupSelectedCells.add(index));
+      const mirroredSelectedEndpoints = [...groupSelectedEndpoints.values()].map(mirrorEndpoint);
+      groupSelectedEndpoints.clear();
+      mirroredSelectedEndpoints.forEach((endpoint) => groupSelectedEndpoints.set(endpointKey(endpoint), endpoint));
+      if (selectedCellIndex !== null) selectedCellIndex = indexMap.get(selectedCellIndex) ?? null;
+      renderGrid();
+      announce(`Graph flipped ${flipX ? "left to right" : "top to bottom"}`);
     }
 
     function endpointWillMove(endpoint, selection) {
@@ -3340,12 +4499,24 @@
     function canMoveSelectedNodes(dx, dy, selection = getMoveSelection()) {
       if (!selection.cellIndices.size && !selection.boxIds.size && !selection.circleIds.size) return false;
 
-      for (const index of selection.cellIndices) {
-        const column = index % columns + dx;
-        const row = Math.floor(index / columns) + dy;
-        if (column < 0 || column >= columns || row < 0 || row >= rows) return false;
-        const destination = row * columns + column;
-        if (hasNode(destination) && !selection.cellIndices.has(destination)) return false;
+      if (isTextOnlySelection(selection)) {
+        const destinationCells = new Set();
+        for (const index of selection.cellIndices) {
+          const position = textPositionAfterMove(index, dx, dy);
+          if (position.x < 0 || position.x > columns || position.y < 0 || position.y > rows) return false;
+          const destination = cellIndexForTextPosition(position);
+          if (destinationCells.has(destination) ||
+            (hasNode(destination) && !selection.cellIndices.has(destination))) return false;
+          destinationCells.add(destination);
+        }
+      } else {
+        for (const index of selection.cellIndices) {
+          const column = index % columns + dx;
+          const row = Math.floor(index / columns) + dy;
+          if (column < 0 || column >= columns || row < 0 || row >= rows) return false;
+          const destination = row * columns + column;
+          if (hasNode(destination) && !selection.cellIndices.has(destination)) return false;
+        }
       }
 
       for (const boxId of selection.boxIds) {
@@ -3355,19 +4526,12 @@
       }
       for (const circleId of selection.circleIds) {
         const circle = circles.find((candidate) => candidate.id === circleId);
-        if (!circle || circle.x - circle.radius + dx < 0 || circle.x + circle.radius + dx > columns ||
+        if (!circle || circle.x - circle.radius / latexXScale + dx < 0 || circle.x + circle.radius / latexXScale + dx > columns ||
           circle.y - circle.radius + dy < 0 || circle.y + circle.radius + dy > rows) return false;
       }
 
       for (const connection of connections) {
-        if (connection.kind !== "multiplication") continue;
-        const firstSource = endpointPositionAfterMove(connection.sources[0], dx, dy, selection);
-        const secondSource = endpointPositionAfterMove(connection.sources[1], dx, dy, selection);
-        const target = endpointPositionAfterMove(connection.target, dx, dy, selection);
-        if (Math.abs(firstSource.y - secondSource.y) > 0.001) return false;
-        const minimumX = Math.min(firstSource.x, secondSource.x);
-        const maximumX = Math.max(firstSource.x, secondSource.x);
-        if (target.x < minimumX - 0.001 || target.x > maximumX + 0.001) return false;
+        if (!connectionGeometryIsValid(connection, (endpoint) => endpointPositionAfterMove(endpoint, dx, dy, selection))) return false;
       }
       return true;
     }
@@ -3393,9 +4557,14 @@
       if (!canMoveSelectedNodes(dx, dy, selection)) return;
 
       snapshot();
-      const moveCellIndex = (index) => selection.cellIndices.has(index)
-        ? cellIndexAfterMove(index, dx, dy)
-        : index;
+      const moveTextByHalfTile = isTextOnlySelection(selection);
+      const movedCellIndices = new Map([...selection.cellIndices].map((index) => [
+        index,
+        moveTextByHalfTile
+          ? cellIndexForTextPosition(textPositionAfterMove(index, dx, dy))
+          : cellIndexAfterMove(index, dx, dy)
+      ]));
+      const moveCellIndex = (index) => movedCellIndices.get(index) ?? index;
       const moveEndpoint = (endpoint) => {
         if (typeof endpoint === "number") return moveCellIndex(endpoint);
         if (endpoint.boxId !== undefined && selection.boxIds.has(endpoint.boxId)) {
@@ -3406,6 +4575,25 @@
         }
         return endpoint;
       };
+      const movedTextNodePositions = new Map([...textNodePositions].map(([index, position]) => [
+        moveCellIndex(index),
+        selection.cellIndices.has(index) ? { x: position.x + dx, y: position.y + dy } : position
+      ]));
+      if (moveTextByHalfTile) {
+        selection.cellIndices.forEach((index) => {
+          const destination = moveCellIndex(index);
+          const position = textPositionAfterMove(index, dx, dy);
+          const cellCenter = {
+            x: destination % columns + 0.5,
+            y: Math.floor(destination / columns) + 0.5
+          };
+          if (position.x === cellCenter.x && position.y === cellCenter.y) {
+            movedTextNodePositions.delete(destination);
+          } else {
+            movedTextNodePositions.set(destination, position);
+          }
+        });
+      }
 
       const movedCells = Array(cells.length).fill(null);
       cells.forEach((operation, index) => {
@@ -3414,13 +4602,18 @@
       cells = movedCells;
 
       const movedPoints = [...points].map(moveCellIndex);
+      const movedPointColors = [...pointColors].map(([index, color]) => [moveCellIndex(index), color]);
       points.clear();
       movedPoints.forEach((index) => points.add(index));
+      pointColors.clear();
+      movedPointColors.forEach(([index, color]) => pointColors.set(index, color));
 
       const moveMapKeys = (map) => [...map].map(([index, value]) => [moveCellIndex(index), value]);
       const movedTextNodes = moveMapKeys(textNodeValues);
       textNodeValues.clear();
       movedTextNodes.forEach(([index, value]) => textNodeValues.set(index, value));
+      textNodePositions.clear();
+      movedTextNodePositions.forEach((position, index) => textNodePositions.set(index, position));
       const movedBulletColors = moveMapKeys(bulletColors);
       bulletColors.clear();
       movedBulletColors.forEach(([index, value]) => bulletColors.set(index, value));
@@ -3458,6 +4651,31 @@
     }
 
     colorSwatches.forEach((swatch) => {
+      swatch.addEventListener("click", () => {
+        const color = swatch.dataset.color;
+        if (!diagramColors[color]) return;
+        const targets = selectedStyleTargets().filter((target) => target.supportsColor);
+        if (targets.length) {
+          const changedTargets = targets.filter((target) => (target.item.color || "black") !== color);
+          if (changedTargets.length) {
+            snapshot();
+            changedTargets.forEach((target) => {
+              if (target.setColor) target.setColor(color);
+              else target.item.color = color;
+            });
+            renderGrid();
+            updateActions();
+          }
+          announce(`${color[0].toUpperCase()}${color.slice(1)} set for ${targets.length} selected item${targets.length === 1 ? "" : "s"}`);
+          return;
+        }
+        creationAppearance.color = color;
+        updateItemStyleControls();
+        announce(`${color[0].toUpperCase()}${color.slice(1)} set for new strands, boxes, and circles`);
+      });
+    });
+    [strokeStyleSelect, strokeWidthSelect, strokeArrowInput, strokeArrowSideSelect].forEach((control) => {
+      control.addEventListener("change", applyStrokeControls);
       swatch.addEventListener("click", () => applyColorToSelection(swatch.dataset.color));
     });
     connectionUpButton.addEventListener("click", () => setConnectionLayer("up"));
@@ -3475,6 +4693,8 @@
     moveLeftButton.addEventListener("click", () => moveSelectionByDirection(-1, 0));
     moveDownButton.addEventListener("click", () => moveSelectionByDirection(0, 1));
     moveRightButton.addEventListener("click", () => moveSelectionByDirection(1, 0));
+    mirrorVerticalButton.addEventListener("click", () => mirrorDiagram("top-bottom"));
+    mirrorHorizontalButton.addEventListener("click", () => mirrorDiagram("left-right"));
     latexEnvironmentButton.addEventListener("click", () => {
       latexEnvironmentOutput.value = latexForEnvironment();
       latexEnvironmentStatus.textContent = "";
@@ -3568,13 +4788,21 @@
 
     function curvedConnectionKind() {
       if (boxMode || circleMode || textNodeMode || groupSelectMode || activeOperationKey === "multiplication") return undefined;
+      if (straightLineMode) return null;
       return curvedConnectionTypes.has(activeOperationKey) ? activeOperationKey : undefined;
+    }
+
+    function addMissingPointNodes(endpoints) {
+      endpoints.forEach((endpoint) => {
+        if (typeof endpoint === "number" && !hasNode(endpoint)) points.add(endpoint);
+      });
     }
 
     function addConnectionBetweenEndpoints(start, end, kind) {
       const startKey = endpointKey(start);
       const endKey = endpointKey(end);
       if (startKey === endKey) return "same-endpoint";
+      if (!connectionGeometryIsValid({ from: start, to: end, kind })) return "invalid-geometry";
       const alreadyConnected = connections.some((connection) =>
         connection.kind !== "multiplication" && (
           (endpointKey(connection.from) === startKey && endpointKey(connection.to) === endKey) ||
@@ -3582,6 +4810,8 @@
       );
       if (alreadyConnected) return "duplicate";
       snapshot();
+      addMissingPointNodes([start, end]);
+      connections.push({ from: start, to: end, kind, ...newItemAppearance(true) });
       connections.push({ from: start, to: end, kind, color: "black" });
       return "added";
     }
@@ -3606,6 +4836,12 @@
       const result = addConnectionBetweenEndpoints(pending.endpoint, endpoint, kind);
       if (result === "same-endpoint") {
         announce("Choose a different endpoint");
+        return;
+      }
+      if (result === "invalid-geometry") {
+        announce("Cups and caps need two distinct endpoints on the same row");
+        connectionSelectionStart = null;
+        renderGrid();
         return;
       }
       connectionSelectionStart = null;
@@ -3665,7 +4901,6 @@
         groupSelectPreview = groupSelectStart;
         groupSelectStartPointer = { x: event.clientX, y: event.clientY };
         groupSelectMoved = false;
-        event.preventDefault();
         return;
       }
 
@@ -3673,8 +4908,9 @@
         event.preventDefault();
         return;
       }
+      if (activeOperationKey && !curvedConnectionTypes.has(activeOperationKey)) return;
 
-      const endpoint = wireEndpointAt(event);
+      const endpoint = connectionEndpointAt(event);
       if (endpoint === null) return;
       wireStartConnectionKind = curvedConnectionTypes.has(activeOperationKey) ? activeOperationKey : null;
       wireStartEndpoint = endpoint;
@@ -3685,6 +4921,11 @@
     });
 
     document.addEventListener("pointermove", (event) => {
+      const gridRect = grid.getBoundingClientRect();
+      lastGridPointer = event.clientX >= gridRect.left && event.clientX <= gridRect.right &&
+        event.clientY >= gridRect.top && event.clientY <= gridRect.bottom
+        ? gridPointAt(event.clientX, event.clientY)
+        : null;
       const dragThreshold = event.pointerType === "touch" ? 8 : 4;
       if (touchGesture && event.pointerId === touchGesture.pointerId && !touchGesture.doubleTapDrag) {
         const deltaX = event.clientX - touchGesture.startX;
@@ -3724,7 +4965,7 @@
       }
       if (wireStartEndpoint === null) return;
       const rect = grid.getBoundingClientRect();
-      const snappedEndpoint = smoothConnectionTypes.has(wireStartConnectionKind) ? wireEndpointAt(event) : null;
+      const snappedEndpoint = connectionEndpointAt(event);
       wirePreview = snappedEndpoint !== null
         ? endpointFor(snappedEndpoint)
         : {
@@ -3767,7 +5008,6 @@
         groupSelectPreview = null;
         groupSelectMoved = false;
         if (wasDrag) renderGrid();
-        else renderConnections();
         return;
       }
       if (boxStart) {
@@ -3801,7 +5041,7 @@
       }
       if (wireStartEndpoint === null) return;
       const start = wireStartEndpoint;
-      const end = wireEndpointAt(event);
+      const end = connectionEndpointAt(event);
       const kind = wireStartConnectionKind;
       const wasDrag = wireMoved;
 
@@ -3817,6 +5057,8 @@
             announce("Choose a different endpoint to connect");
           } else if (result === "duplicate") {
             announce("Those operations are already connected");
+          } else if (result === "invalid-geometry") {
+            announce("Cups and caps need two distinct endpoints on the same row");
           } else {
             announce(kind ? `${operationDefinitions[kind].label} connected` : "Wire connected");
           }
@@ -3830,7 +5072,7 @@
       wireMoved = false;
       grid.classList.remove("is-wiring");
       if (wasDrag) {
-        renderConnections();
+        renderGrid();
         updateActions();
         updateCount();
       }
@@ -3862,16 +5104,19 @@
       }
       const connectionKind = curvedConnectionKind();
       if (connectionKind !== undefined) {
-        const endpoint = wireEndpointAt(event);
+        const endpoint = connectionEndpointAt(event);
         if (endpoint !== null) {
           handleConnectionEndpointSelection(endpoint, connectionKind);
           return;
         }
+        if (straightLineMode) {
+          announce("Choose a node or shape port to connect");
+          return;
+        }
       }
       clearConnectionSelectionStart();
-      if (groupSelectMode) return;
       const wire = event.target.closest?.(".wire-hit-area");
-      if (!activeOperationKey && !boxMode && !textNodeMode && wire) {
+      if (!activeOperationKey && !boxMode && !circleMode && !textNodeMode && wire) {
         const connectionIndex = Number(wire.dataset.connectionIndex);
         const endpoint = nodeNearConnectionEndpoint(connections[connectionIndex], event.clientX, event.clientY);
         clearSelection();
@@ -3888,13 +5133,18 @@
           selectBox(boxes.findIndex((box) => box.id === endpoint.boxId));
         } else {
           announce("Wire selected; press Backspace to delete it");
-          renderConnections();
+          renderGrid();
           updateActions();
         }
         return;
       }
       const point = gridPositionAt(event.clientX, event.clientY);
-      const cell = event.target.closest(".grid-cell");
+      const cellElement = event.target.closest(".grid-cell");
+      const fallbackCellIndex = Math.min(rows - 1, Math.max(0, Math.floor(point.y))) * columns +
+        Math.min(columns - 1, Math.max(0, Math.floor(point.x)));
+      const cell = cellElement || (textNodeMode
+        ? grid.querySelector(`.grid-cell[data-index="${fallbackCellIndex}"]`)
+        : null);
       const index = cell ? Number(cell.dataset.index) : null;
       if (boxMode) return;
 
@@ -3926,7 +5176,7 @@
       }
 
       if (activeOperationKey === "multiplication") {
-        const selectedEndpoint = wireEndpointAt(event);
+        const selectedEndpoint = connectionEndpointAt(event);
         if (selectedEndpoint === null) {
           announce("Choose a node or shape port for multiplication");
           return;
@@ -3946,8 +5196,12 @@
         const selectedPoint = endpointFor(selectedEndpoint);
         if (multiplicationSelection.length === 1) {
           const firstSource = endpointFor(multiplicationSelection[0]);
-          if (selectedPoint.y !== firstSource.y) {
+          if (Math.abs(selectedPoint.y - firstSource.y) > 0.001) {
             announce("Both source nodes must be on the same row");
+            return;
+          }
+          if (Math.abs(selectedPoint.x - firstSource.x) < 0.001) {
+            announce("The two source nodes must have different horizontal positions");
             return;
           }
         }
@@ -3955,8 +5209,16 @@
           const [firstSource, secondSource] = multiplicationSelection.map(endpointFor);
           const minimumX = Math.min(firstSource.x, secondSource.x);
           const maximumX = Math.max(firstSource.x, secondSource.x);
+          if (Math.abs(firstSource.x - secondSource.x) < 0.001) {
+            announce("The two source nodes must have different horizontal positions");
+            return;
+          }
           if (selectedPoint.x < minimumX - 0.001 || selectedPoint.x > maximumX + 0.001) {
             announce("Place the target between the two sources");
+            return;
+          }
+          if (Math.abs(selectedPoint.y - firstSource.y) < 0.001) {
+            announce("Place the target above or below the source row");
             return;
           }
           if (multiplicationSelection.some((source) => endpointKey(source) === selectedKey)) {
@@ -3974,6 +5236,8 @@
             return;
           }
           snapshot();
+          addMissingPointNodes([...multiplicationSelection, selectedEndpoint]);
+          connections.push({ kind: "multiplication", sources: [...multiplicationSelection], target: selectedEndpoint, ...newItemAppearance() });
           connections.push({ kind: "multiplication", sources: [...multiplicationSelection], target: selectedEndpoint, color: "black" });
           clearSelection();
           activeInstructions.textContent = multiplicationInstructions;
@@ -3988,7 +5252,7 @@
         activeInstructions.textContent = multiplicationSelection.length === 1
           ? multiplicationSecondSourceInstructions
           : multiplicationTargetInstructions;
-        announce(multiplicationSelection.length === 1 ? "Select the second source node on the same row" : "Select the target between the sources, above or below");
+        announce(multiplicationSelection.length === 1 ? "Select a second source on the same row at a different horizontal position" : "Select the target between the sources on a different row");
         renderGrid();
         return;
       }
@@ -4016,15 +5280,34 @@
           announce("Cell already contains a node");
           return;
         }
-        if (boxes.some((box) => point.x >= box.x && point.x <= box.x + box.width && point.y >= box.y && point.y <= box.y + box.height)) {
+        const snappedPoint = gridPointAt(event.clientX, event.clientY);
+        const overlapsNode = cells.some((operation, existingIndex) => {
+          if (!operation) return false;
+          const position = endpointFor(existingIndex);
+          return position.x === snappedPoint.x && position.y === snappedPoint.y;
+        }) || [...points].some((existingIndex) => {
+          const position = endpointFor(existingIndex);
+          return position.x === snappedPoint.x && position.y === snappedPoint.y;
+        });
+        if (overlapsNode) {
+          announce("That grid position already contains a node");
+          return;
+        }
+        if (boxes.some((box) => snappedPoint.x >= box.x && snappedPoint.x <= box.x + box.width &&
+          snappedPoint.y >= box.y && snappedPoint.y <= box.y + box.height)) {
           announce("Nodes cannot be placed inside a box");
           return;
         }
         snapshot();
         cells[index] = "text";
         textNodeValues.set(index, "");
+        const cellColumn = index % columns;
+        const cellRow = Math.floor(index / columns);
+        if (snappedPoint.x !== cellColumn + 0.5 || snappedPoint.y !== cellRow + 0.5) {
+          textNodePositions.set(index, snappedPoint);
+        }
         selectedCellIndex = index;
-        announce("Text node placed; enter its LaTeX expression or click another empty tile to place another");
+        announce("Text node placed; enter its LaTeX expression or click another grid position to place another");
         renderGrid();
         return;
       }
@@ -4090,7 +5373,9 @@
       snapshot();
       cells.fill(null);
       points.clear();
+      pointColors.clear();
       textNodeValues.clear();
+      textNodePositions.clear();
       bulletColors.clear();
       connections.length = 0;
       boxes.length = 0;
@@ -4101,6 +5386,8 @@
     });
 
     document.addEventListener("keydown", (event) => {
+      if (latexDialog.open || latexEnvironmentDialog.open) return;
+
       if (event.target === circleLabelInput) {
         if (event.key === "Escape") {
           event.preventDefault();
@@ -4128,7 +5415,6 @@
       }
 
       if (event.code === "Space" && !event.repeat &&
-        (activeOperationKey || boxMode || circleMode || textNodeMode || groupSelectMode || selectedBoxIndex !== null || selectedCircleIndex !== null) &&
         !event.target.matches("input, textarea, select, [contenteditable='true']")) {
         event.preventDefault();
         setDefaultMode();
@@ -4148,8 +5434,7 @@
       }
 
       if (!event.repeat && !event.ctrlKey && !event.altKey && !event.metaKey &&
-        !(event.target instanceof HTMLElement && event.target.matches("input, textarea, select, [contenteditable='true']")) &&
-        !latexDialog.open) {
+        !(event.target instanceof HTMLElement && event.target.matches("input, textarea, select, [contenteditable='true']"))) {
         const activate = toolShortcuts.get(event.key.toLowerCase());
         if (activate) {
           event.preventDefault();
@@ -4167,6 +5452,14 @@
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "y") {
         event.preventDefault();
         redoButton.click();
+      } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "c" &&
+        !(event.target instanceof HTMLElement && event.target.matches("input, textarea, select, [contenteditable='true']"))) {
+        event.preventDefault();
+        copySelectionToClipboard();
+      } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v" &&
+        !(event.target instanceof HTMLElement && event.target.matches("input, textarea, select, [contenteditable='true']"))) {
+        event.preventDefault();
+        pasteClipboardAtPointer();
       } else if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "z") {
         event.preventDefault();
         (event.shiftKey ? redoButton : undoButton).click();

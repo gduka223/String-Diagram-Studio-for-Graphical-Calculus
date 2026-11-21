@@ -1,0 +1,135 @@
+% String Diagram Studio LaTeX support code.
+% These support commands mirror the embedded definitions in index.html.
+\documentclass[tikz,border=8pt]{standalone}
+
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{tikz}
+
+% Editor palette colors: schwarz=black, grau=gray!60, gruen=green!50!black,
+% blau=blue!70!black, and orange=orange!85!black.
+\newcommand{\schwarz}{black}
+\newcommand{\grau}{gray!60}
+\newcommand{\gruen}{green!50!black}
+\newcommand{\blau}{blue!70!black}
+\newcommand{\orange}{orange!85!black}
+
+
+% Strand commands share this style prefix:
+% [<TikZ options>]{line width in pt}{color}{geometry...}
+% The style is optional (solid by default); for example, [dashed,<->].
+% Colors are the palette names above, such as \schwarz or \blau.
+% \dCup / \dCap: {left x}{y}{horizontal span}; both endpoints have the same y.
+\newcommand{\dCup}[6][solid]{
+	\draw[#1,line width=#2,color=#3] (#4,#5) .. controls (#4,#5-0.6*#6) and (#4+#6,#5-0.6*#6) .. (#4+#6,#5);}
+\newcommand{\dCap}[6][solid]{
+	\draw[#1,line width=#2,color=#3] (#4,#5) .. controls (#4,#5+0.6*#6) and (#4+#6,#5+0.6*#6) .. (#4+#6,#5);}
+\newcommand{\dCupO}[6][solid]{
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#4,#5) .. controls (#4,#5-0.6*#6) and (#4+#6,#5-0.6*#6) .. (#4+#6,#5);
+	\dCup[#1]{#2}{#3}{#4}{#5}{#6}}
+\newcommand{\dCapO}[6][solid]{
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#4,#5) .. controls (#4,#5+0.6*#6) and (#4+#6,#5+0.6*#6) .. (#4+#6,#5);
+	\dCap[#1]{#2}{#3}{#4}{#5}{#6}}
+
+% \dLine joins two arbitrary endpoints: {x1}{y1}{x2}{y2}.
+\newcommand{\dLine}[7][solid]{
+	\draw[#1,line width=#2,color=#3] (#4,#5) -- (#6,#7);}
+\newcommand{\dLineO}[7][solid]{
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#4,#5) -- (#6,#7);
+	\dLine[#1]{#2}{#3}{#4}{#5}{#6}{#7}}
+
+% \sLine has vertical endpoint tangents; \hLine has horizontal endpoint
+% tangents. Both use {x1}{y1}{x2}{y2}.
+\newcommand{\sLine}[7][solid]{
+	\draw[#1,line width=#2,color=#3] (#4,#5) .. controls (#4,#5*0.45+#7*0.55) and (#6,#5*0.55+#7*0.45) .. (#6,#7);}
+\newcommand{\sLineO}[7][solid]{
+	\draw[line width=4.5pt,color=white] (#4,#5) .. controls (#4,#5*0.45+#7*0.55) and (#6,#5*0.55+#7*0.45) .. (#6,#7);
+	\sLine[#1]{#2}{#3}{#4}{#5}{#6}{#7}}
+\newcommand{\hLine}[7][solid]{
+	\draw[#1,line width=#2,color=#3] (#4,#5) .. controls (#4*0.45+#6*0.55,#5) and (#4*0.55+#6*0.45,#7) .. (#6,#7);}
+\newcommand{\hLineO}[7][solid]{
+	\draw[line width=4.5pt,color=white] (#4,#5) .. controls (#4*0.45+#6*0.55,#5) and (#4*0.55+#6*0.45,#7) .. (#6,#7);
+	\hLine[#1]{#2}{#3}{#4}{#5}{#6}{#7}}
+
+% Multiplication geometry:
+% {left source x}{source y}{source span}{signed target height}{target x offset}
+% Sources share y; the target lies between them on a different row.
+% Use dMult unless the target shares a source x-coordinate. dLMult and dRMult
+% keep the left or right source strand straight when the target is aligned there.
+\newcommand{\dMult}[8][solid]{
+	\draw[#1,line width=#2,color=#3]
+		(#4,#5) -- (#4,#5+#7*0.2)
+		.. controls (#4,#5+#7*0.5) .. (#4+#6*0.25,#5+#7*0.5)
+		-- (#4+#6*0.5,#5+#7*0.5)
+		-- (#4+#6*0.75,#5+#7*0.5)
+		.. controls (#4+#6,#5+#7*0.5) .. (#4+#6,#5+#7*0.2)
+		-- (#4+#6,#5);
+	\draw[#1,line width=#2,color=#3]
+		(#4+#8,#5+#7*0.5) -- (#4+#8,#5+#7);}
+\newcommand{\dMultO}[8][solid]{
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+		(#4,#5) -- (#4,#5+#7*0.2)
+		.. controls (#4,#5+#7*0.5) .. (#4+#6*0.25,#5+#7*0.5)
+		-- (#4+#6*0.5,#5+#7*0.5)
+		-- (#4+#6*0.75,#5+#7*0.5)
+		.. controls (#4+#6,#5+#7*0.5) .. (#4+#6,#5+#7*0.2)
+		-- (#4+#6,#5);
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+		(#4+#8,#5+#7*0.5) -- (#4+#8,#5+#7);
+	\dMult[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}}
+\newcommand{\dLMult}[8][solid]{
+	\draw[#1,line width=#2,color=#3]
+		(#4,#5) -- (#4,#5+#7*0.5) -- (#4+#6*0.75,#5+#7*0.5)
+		.. controls (#4+#6,#5+#7*0.5) .. (#4+#6,#5+#7*0.2) -- (#4+#6,#5);
+	\draw[#1,line width=#2,color=#3]
+		(#4+#8,#5+#7*0.5) -- (#4+#8,#5+#7);}
+\newcommand{\dRMult}[8][solid]{
+	\draw[#1,line width=#2,color=#3]
+		(#4,#5) -- (#4,#5+#7*0.2)
+		.. controls (#4,#5+#7*0.5) .. (#4+#6*0.25,#5+#7*0.5)
+		-- (#4+#6,#5+#7*0.5) -- (#4+#6,#5);
+	\draw[#1,line width=#2,color=#3]
+		(#4+#8,#5+#7*0.5) -- (#4+#8,#5+#7);}
+\newcommand{\dLMultO}[8][solid]{
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+		(#4,#5) -- (#4,#5+#7*0.5) -- (#4+#6*0.75,#5+#7*0.5)
+		.. controls (#4+#6,#5+#7*0.5) .. (#4+#6,#5+#7*0.2) -- (#4+#6,#5);
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+		(#4+#8,#5+#7*0.5) -- (#4+#8,#5+#7);
+	\dLMult[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}}
+\newcommand{\dRMultO}[8][solid]{
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+		(#4,#5) -- (#4,#5+#7*0.2)
+		.. controls (#4,#5+#7*0.5) .. (#4+#6*0.25,#5+#7*0.5)
+		-- (#4+#6,#5+#7*0.5) -- (#4+#6,#5);
+	\draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
+		(#4+#8,#5+#7*0.5) -- (#4+#8,#5+#7);
+	\dRMult[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}}
+
+% A bullet is a filled point: {x}{y}{color}.
+\newcommand{\dBull}[3]{\filldraw[draw=#3,fill=#3] (#1,#2) circle[radius=0.09cm];}
+
+
+\begin{document}
+% Example invocations use the same 1.5cm by 1cm grid steps as website exports.
+\begin{tikzpicture}[x=1.5cm,y=1cm]
+	\foreach \x in {0,...,10}
+	\draw[color=gray] (\x,0) -- (\x,10);
+	\foreach \y in {0,...,10}
+	\draw[color=gray] (0,\y) -- (10,\y);
+	\dCup[dashed]{1.2}{\schwarz}{1}{1}{2}
+	\dCupO{1.2}{\gruen}{1}{4}{2}
+	\dCap[<-]{1}{\blau}{5}{2}{2}
+	\dCapO{1.2}{\orange}{5}{4}{2}
+	\dMult{1.2}{\schwarz}{1}{5}{4}{-2}{2}
+	\dRMultO[dotted]{1.2}{\orange}{5}{5}{4}{2}{4}
+	\dLMultO{1.2}{\blau}{5}{1}{4}{3}{0}
+	\dBull{3}{1}{\schwarz}
+	\dLine[<-]{2}{\schwarz}{5}{3}{4}{1}
+	\dLineO[dashed]{1.2}{\gruen}{0}{9}{2}{8}
+	\sLine{1.2}{\gruen}{1}{7}{4}{8}
+	\sLineO{1.2}{\blau}{1}{8}{4}{9}
+	\hLine{1.2}{\gruen}{6}{1}{9}{2}
+	\hLineO[dashed]{1.2}{\orange}{6}{7}{9}{8}
+\end{tikzpicture}
+\end{document}

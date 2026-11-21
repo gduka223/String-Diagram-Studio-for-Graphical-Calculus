@@ -1,119 +1,159 @@
 # String Diagram Studio: contributor guide
 
-## Running the editor
+## Running and source layout
 
-The application is intentionally a single, directly openable `index.html`; it has no build step or local package dependencies. The live math preview loads MathJax 3 from a CDN, so preview typesetting needs network access. Diagram editing and LaTeX generation are handled by the page itself.
+Open `index.html` directly in a browser. The application remains a single file with no build step or local package dependencies. MathJax 3 loads from a CDN for live mathematical labels; editing, JSON files and LaTeX generation work independently of that network request. For HTTP testing, run `python -m http.server 8766` in the project directory.
 
-## Source layout
+The left rail contains all node, shape and strand tools and the shared Item style controls. The canvas toolbar contains zoom, movement, mirror, selection, deletion, history and export actions. The startup diagram is 8 by 8; default and reset zoom are 70%.
 
-The HTML, CSS, application state, event handling, SVG rendering, and LaTeX generation all live in `index.html`. Keep the app self-contained: splitting the JavaScript into modules would break the current `file://` workflow unless the launch and packaging model changed too. The 8-by-7 startup diagram is stored in `string-diagram-studio.json` and mirrored in the embedded `default-diagram-source` JSON block because a page opened from `file://` cannot reliably fetch a neighboring file. The canvas starts at 70% zoom, which is also the reset zoom.
+HTML, CSS, application data, event handling, SVG rendering, JSON validation and LaTeX generation live in `index.html`. Keep the directly openable workflow when making changes: splitting JavaScript into imported modules would require revisiting packaging and `file://` support.
 
-The script separates work into these flows:
+Two embedded blocks have standalone counterparts:
 
-1. Tool activation updates the mode, instructions, and pressed state.
-2. Pointer and click handlers modify the plain-data diagram families.
-3. `renderGrid()` draws grid cells, then calls `renderConnections()` for SVG connections and shape overlays.
-4. `captureState()` / `restoreState()` copy persistent diagram data for undo and redo.
-5. `latexForDiagram()` serializes shapes, connections, and nodes; `latexForConnection()` handles each connection family.
-6. `diagramForSave()` / `validateSavedDiagram()` serialize and validate standalone JSON save files before `applySavedDiagram()` replaces the current diagram.
+- `default-diagram-source` mirrors `string-diagram-studio.json`.
+- `latex-support-source` mirrors the preamble and macro definitions in `string-diagram-studio.tex`. The standalone file also contains the startup picture.
 
-## State and data model
+The embedded blocks are used at runtime because browsers cannot reliably fetch neighbouring files under `file://`. Keep the JSON copies, support code and standalone startup picture synchronized. **Download LaTeX Environment** generates complete source for the current diagram rather than fetching the standalone file.
 
-Grid coordinates start at the top-left. A cell index is row-major (`row * columns + column`); a node's visual center is `(column + 0.5, row + 0.5)`. In exported TikZ, the vertical axis is inverted with `rows - y`, so diagrams continue to read bottom-to-top.
+The principal flows are:
 
-| Variables | Purpose and shape |
+1. A registered tool activates a mode and updates instructions and pressed states.
+2. Click/pointer handlers change plain-data diagram families after taking an undo snapshot.
+3. `renderGrid()` creates grid cells; `renderConnections()` draws shapes, strands, previews and overlays.
+4. `scheduleMathTypeset()` coalesces asynchronous MathJax work. `scheduleArrowHeadRender()` refreshes arrowheads after label layout and zoom changes.
+5. `latexForDiagram()` emits shapes, invisible label measurements, ordered strands and visible labels/nodes. `latexForConnectionCommand()` chooses the strand macro; `latexForConnection()` adds text-clearance measurements.
+6. `diagramForSave()` / `formatDiagramSave()` serialize JSON. `validateSavedDiagram()` validates the entire file before `applySavedDiagram()` replaces the diagram and resets selection/history.
+
+## Coordinates and state
+
+Grid coordinates start at the top-left. A cell index is row-major: `row * columns + column`. A cell-centred node is at `(column + 0.5, row + 0.5)`.
+
+**Editor cells are square.** `updateGridDimensions()` uses aspect ratio `columns / rows`, independently of export dimensions. Keep SVG viewBoxes, hit testing, shape ports and overlays in these same grid units. Equal-width/height boxes are square and circles are round at every zoom level.
+
+**TikZ retains stretched axes:** `latexXScale = 1.5` cm and `latexYScale = 1` cm per grid step. Vertical coordinates are inverted by `rows - y`. Circle radii are physical centimetres in TikZ; `latexPoint()` adjusts circle-port coordinates at export so strands meet the circle boundary. Do not apply the LaTeX scale factors to the editor grid.
+
+| State | Purpose |
 |---|---|
-| `columns`, `rows` | Current grid dimensions. |
-| `cells` | Row-major array of operation keys or `null`. Structural node tools currently use keys such as `"bullet"` and `"text"`. |
-| `points` | Set of cell indices explicitly marked as orientation points. |
-| `textNodeValues` | Map from text-node cell index to its LaTeX source; an empty string is a valid empty node. |
-| `bulletColors` | Map from bullet cell index to a color key; missing entries mean black. |
-| `connections` | Array of `DiagramConnection` families. Ordinary wires have `kind: null`; evaluation/coevaluation segments have `kind: "evaluation"` / `"coevaluation"`; smooth vertical/horizontal strands have `kind: "smooth-line"` / `"smooth-horizontal"`; all ordinary connections have `from` and `to`. Multiplication has two `sources` and one `target`. Each endpoint is either a cell index, a box-border endpoint `{ boxId, x, y }`, or a circle port `{ circleId, side, x, y }`; all connection types can use shape ports. Optional `color` customizes appearance. `layer` separates normal and raised connections; array order is the stacking order within a layer, and raising moves that connection to the front of the raised stack. The editor and LaTeX exporter use this same order. Multiplication uses left/right LaTeX variants only when the target is horizontally aligned with a source. |
-| `boxes` | Array of `{ id, x, y, width, height, color?, text? }` objects. Coordinates and dimensions are in grid units; `id` remains stable when the array is reordered or resized. |
-| `circles` | Array of `{ id, x, y, radius, color?, text? }` objects. `x`, `y`, and `radius` are grid units; circle wire endpoints are represented by cardinal ports. |
-| `nextBoxId`, `nextCircleId` | Monotonic IDs for newly created shapes, used by shape-port connections. |
-| `operationDefinitions` | Labels and display metadata keyed by operation key. `diagramColors` maps the color keys to CSS and LaTeX names. |
-| `selectionModeInstructions`, operation instruction strings, `curvedConnectionTypes`, `circleBoundaryCursorTolerancePx` | Shared user-facing descriptions, recognized curved segment kinds, and the pixel tolerance used for circle-boundary cursor feedback. |
-| `undoStack`, `redoStack` | Snapshots of persistent diagram content. Selection, active tool, and transient pointer gestures are deliberately not part of a snapshot. |
-| `activeOperationKey` | Operation currently being placed or used to draw a special connection; empty in selection and shape-drawing modes. |
-| `boxMode`, `circleMode`, `textNodeMode`, `groupSelectMode` | Current shape/text placement and group-selection modes. Group selection uses a drag rectangle and highlights selected nodes and shapes in green; a box or circle is included only when the rectangle contains all its invisible ports. |
-| `selectedCellIndex`, `selectedBoxIndex`, `selectedCircleIndex`, `selectedConnectionIndex` | At most one selected diagram item, represented by an index into its family. |
-| `groupSelectedCells`, `groupSelectedEndpoints` | Transient group selection: occupied cell indices and invisible box-border/circle-port endpoints selected by the drag rectangle. Grid-edge insertion remaps both sets so the selection and move controls remain active. |
-| `moveUpButton`, `moveLeftButton`, `moveDownButton`, `moveRightButton` | Directional toolbar controls; boxes selected without other nodes move by half a tile, while cell nodes and mixed selections move by one tile. Controls are disabled when a move would leave the grid, collide with an unselected cell node, or violate a multiplication's source-row/target-range constraints. |
-| `multiplicationSelection` | In-progress multiplication endpoints, in selection order. |
-| `boxLabelDraft`, `circleLabelDraft`, `textNodeDraft` | Uncommitted editor contents for the selected label/node. |
-| `boxStart`, `boxPreview`, `boxStartPointer`, `boxMoved` | Box-drawing start/preview coordinates, original pointer position, and drag threshold state. |
-| `groupSelectStart`, `groupSelectPreview`, `groupSelectStartPointer`, `groupSelectMoved` | Group-selection drag start/preview coordinates, original pointer position, and drag threshold state. |
-| `wireStartEndpoint`, `wirePreview`, `wireStartPointer`, `wireStartConnectionKind`, `wireMoved` | Wire gesture endpoints, preview position, pointer position, optional evaluation/coevaluation/smooth-line/smooth-horizontal kind, and drag threshold state. `wireStartEndpoint` is an endpoint, not necessarily a cell index. |
-| `suppressNextClick` | Prevents a completed drag from also being interpreted as a click. |
-| `canvasZoom` | Display scale only; it does not change diagram coordinates or exported measurements. |
-| `mathJaxReady`, `mathTypesetScheduled`, `mathTypesetRunning`, `mathTypesetAgain` | Track MathJax availability and coordinate asynchronous typesetting while coalescing repeated render requests. |
-| `toolRegistry`, `toolShortcuts` | Registered toolbar controls and their keyboard activation functions. |
+| `columns`, `rows`, `cells` | Dimensions and dense row-major node types or `null`. |
+| `points` | Set of faint blue reference/orientation nodes. Their appearance is fixed and they are omitted from LaTeX. |
+| `textNodeValues`, `textNodePositions` | Text expressions and optional half-cell positions away from the cell centre. Empty text is valid. `endpointFor()` resolves the actual position. |
+| `bulletColors` | Bullet colour by cell; missing entries mean black. Bullet size is fixed. |
+| `connections` | Ordinary `{ from, to, kind, ...appearance }` strands or `{ kind: "multiplication", sources: [a, b], target, ...appearance }`. |
+| `boxes`, `circles` | Shapes with stable IDs, grid geometry, optional text, colour and stroke appearance. |
+| `nextBoxId`, `nextCircleId` | Monotonic IDs. Shape-port connections refer to IDs rather than array indices. |
+| `creationAppearance` | Defaults for new objects: colour, line style, width, arrows and arrow side. |
+| `selectedCellIndex`, `selectedBoxIndex`, `selectedCircleIndex`, `selectedConnectionIndex` | Individual selection. |
+| `groupSelectedCells`, `groupSelectedEndpoints` | Transient selection of nodes and complete shapes. |
+| `diagramClipboard`, `lastGridPointer` | Internal copied fragment and last canvas pointer position used by paste. |
+| `undoStack`, `redoStack` | Diagram snapshots; selection, active tools and transient gestures are excluded. At most 100 pre-edit snapshots are retained. |
+| `toolRegistry`, `toolShortcuts` | Buttons, shortcuts and activation callbacks. |
+| `wireStartEndpoint`, `wirePreview`, `wireStartConnectionKind`, `wireMoved` | Strand gesture state; shape endpoints are supported as well as cell indices. |
+| `boxLabelDraft`, `circleLabelDraft`, `textNodeDraft` | Uncommitted label edits, included in live previews and JSON saves. |
+| `canvasZoom` | Display scale only; saved/exported measurements do not change. |
 
-DOM references are named after their element IDs (for example, `grid`, `wireLayer`, and `activeInstructions`). They are view objects, not diagram data.
+Endpoints are numeric cell indices, `{ boxId, x, y }`, or `{ circleId, side, x, y }`. Box ports snap to half-cell positions on the boundary. Circle ports are `north`, `south`, `east` or `west`, at the editor radius. The importer also accepts older east/west coordinates divided by `latexXScale` and normalizes them.
 
-## Diagram save files
+Ordinary connection kinds are `null` (straight), `evaluation`, `coevaluation`, `smooth-line` (vertical endpoint tangents) and `smooth-horizontal` (horizontal endpoint tangents). Multiplication has three endpoints. Use `connectionEndpoints()` and `mapConnectionEndpoints()` to traverse/remap every topology.
 
-Use **Save diagram** below the canvas to download `string-diagram-studio.json`, or **Open diagram** to load a previously saved JSON file. Version 2 is sparse: `grid` stores dimensions, and `nodes` contains only occupied cells as `{ cell, type }` entries, with optional `label` or `color` fields. Orientation points use `type: "point"`. Connection endpoints are stored directly, so invisible grid nodes need no separate empty-cell records; shape ports are reconstructed from shape geometry. Boxes, circles, shape IDs, and every connection type, endpoint, color, and layer are stored. Selection, active editing state, and undo/redo history are not stored. The importer continues to accept version 1 files with dense `cells` arrays.
+`layer: "up"` draws a strand above crossings with a white underlay. Normal strands draw first; array order determines stacking within each layer. Raising a strand moves it to the end of the raised stack. SVG and TikZ share this ordering.
 
-Opening a file validates the whole document before changing the current diagram. Unsupported versions, malformed values, invalid node/shape references, and invalid multiplication constraints are reported without replacing the current diagram. A successful open resets selection and both history stacks. The importer accepts files up to 10 MB and grids up to 100,000 cells.
+## Tools, selection and transforms
 
-## Adding a tool
+Selection mode (`Space` or `Escape`) creates a blue reference node on an empty-cell click, selects objects individually and selects groups by dragging a rectangle. A shape joins a group only when all its invisible ports are inside. The explicit Group select shortcut (`G`) is also registered. Selection feedback is transient and does not become a saved style.
 
-The in-source tool registry keeps the toolbar button, keyboard shortcut, pressed state, and activation callback together while preserving the single-file workflow.
+The Line tool (`L`), evaluation (`E`), coevaluation (`C`), Smooth V (`V`) and Smooth H (`H`) support two endpoint clicks or dragging. Missing reference nodes can be created at empty grid endpoints. On touchscreens, a single-finger swipe pans; double-tap, hold the second tap and drag to draw or select.
 
-1. Add a button to the appropriate tool group in `index.html`. Give it a unique ID, an accessible name, and an `aria-pressed` attribute if it is a mode button. Keep its visible key hint and title consistent with its shortcut.
-2. Cache the element with the other DOM references.
-3. Add one entry to the registry array passed to `registerTool`, containing `id`, `button`, optional `shortcut`, and `activate`. Registration wires both click and keyboard activation and updates the button's `aria-keyshortcuts`.
-4. Implement activation using `activateToolMode()` for the standard mode lifecycle: active operation key, category, label, instructions, selection clearing, pressed state, and rerender. Keep a specialized activation callback when the gesture is not a standard mode.
-5. For a new node type, add its metadata to `operationDefinitions` and handle its placement and display in `renderGrid()`. Include any per-node data in `captureState()` / `restoreState()` and in `latexForDiagram()`.
-6. For a new connection family, define its endpoint data shape, extend `connectionEndpoints()` and `mapConnectionEndpoints()` if it has a different topology, then add its interaction, SVG rendering, selection/deletion, and LaTeX serialization. For new LaTeX commands, document and define them in `diagram-output-template.tex`.
-7. Test placement, selection, undo/redo, grid-edge insertion, and exported LaTeX. Add the feature's keyboard shortcut to its visible key hint and accessibility text.
+**Evaluation and coevaluation require distinct endpoints at the same height.** Invalid click pairs, drops, imports and moves are rejected. During a drag, a dashed horizontal guide marks the required height. An invalid preview turns red and displays “End at the same height”; it does not silently create a different connection on release. Tooltips, instructions and rejection messages describe this constraint.
 
-Press **G** or use **Group select**, then drag across the grid to select cell nodes and invisible box/circle ports in the rectangle. On touchscreens, double-tap, hold the second tap, and drag to start a canvas drag gesture; a single-finger swipe pans the canvas. Straight connections in selection mode require dragging on desktop or double-tap-drag on touchscreens, so a normal tap continues to select nodes. In evaluation, coevaluation, and smooth-connection modes, drag between endpoints or click/tap two endpoints in order. In multiplication mode, click/tap the two source endpoints and then the target. Group selection is transient and visually highlighted in green.
+Multiplication (`M`) takes two distinct sources at the same height and a target between their x-coordinates on a different height. `connectionGeometryIsValid()` centralizes these geometry constraints for interaction, movement and validation.
 
-Press **Delete** or **Backspace** to remove the current selection. Deleting a group removes its selected cell nodes and fully selected shapes, along with every connection attached to them.
+Boxes (`X`) are drawn by dragging; circles (`O`) are placed in a cell. Placement returns to selection and shows the shape's label editor. Bullets (`B`) and text nodes (`T`) use cell placement. The text icon is a rounded box with a T; the box icon has a solid outline. Mirror buttons use icons, accessible names and hover titles.
 
-The canvas toolbar's **Delete** button uses the same action, stays disabled without a deletable selection, and is highlighted red when one is active. On narrow phone layouts, text-node marker boxes shrink to fit within one grid cell.
+Move arrows translate text-only and box-only selections by half a cell; other node and mixed selections move by one cell. Cell indices, text positions, shape ports and dependent connections move together. Controls disable directions that leave the grid, collide with unselected nodes or violate connection geometry.
 
-The four move arrows translate cell nodes and mixed selections by one tile; a selection consisting only of boxes moves by half a tile. Cell indices, shape-port endpoints, and all dependent connections move together; multiplication constraints are checked before enabling each direction.
+`Ctrl/Cmd+C` copies the selected fragment into the editor's internal clipboard. `Ctrl/Cmd+V` pastes near the last canvas pointer position, clamped to the grid. Paste assigns new shape IDs, preserves appearance and internal connections, rejects collisions and selects the pasted items. Native text copying remains available in input fields.
 
-Placing a box or circle returns to selection mode, selects the new shape, and shows its LaTeX label editor.
+Mirroring affects the whole diagram. Top/bottom reflection exchanges evaluation/coevaluation and north/south ports; left/right reflection exchanges east/west ports. Text remains readable and arrow direction remains attached to the same logical start/end. Both operations are undoable.
 
-**Trim canvas** removes empty outer rows and columns around cell nodes, numeric connection endpoints, boxes, and circles. It translates retained cell indices, shape coordinates, and shape-port endpoints together, and the operation is undoable.
+Delete/Backspace and the toolbar Delete action remove the selection and attached connections. Grid-edge insertion remaps all dependent data. **Trim canvas** removes empty outer rows/columns and translates retained geometry together. Clear, delete, move, trim, mirror, paste and appearance changes participate in undo/redo.
 
-The registry handles tool-button wiring and mode highlighting; it is not a runtime plug-in loader. New diagram semantics still need explicit interaction, rendering, history, and export support.
+## Appearance controls
 
-## LaTeX template reference
+`selectedStyleTargets()` declares what a selection can edit. Group styling includes a strand only when all its endpoints belong to selected nodes/shapes. **Only the control the user changes is applied:** changing line style must preserve mixed widths, arrow directions and enabled states.
 
-`diagram-output-template.tex` defines the named colors and TikZ macros emitted by the editor. Its final TikZ picture should match the startup diagram stored in `string-diagram-studio.json`. **Download LaTeX Environment** in the page header opens the complete standalone source containing the support commands and current diagram; the panel can copy the source or download it as a `.tex` file.
+| Object | Colour | Line style and width | Arrows |
+|---|---|---|---|
+| Ordinary strands | Yes | Yes | Start, end or both ends |
+| Multiplication | Yes | Yes | No |
+| Boxes/circles | Yes | Yes | No |
+| Bullets | Yes | No; fixed 12px diameter / 0.09cm TikZ radius | No |
+| Reference nodes | No; always faint blue | No | No |
+| Text nodes | Label editor | No | No |
 
-The page is intentionally usable from `file://`, so the LaTeX Environment panel reads its support code from the embedded `latex-support-source` text block in `index.html` rather than fetching the `.tex` file. Keep that block synchronized with the macro definitions in `diagram-output-template.tex`. The startup JSON is also embedded in `index.html` for direct-file use; keep the JSON file and embedded copy synchronized, and update the template picture when the startup diagram changes.
+Reference nodes are protected in individual and group styling. Legacy JSON point colours are accepted, discarded on load and omitted from new saves. Their group selection is indicated by the cell without recolouring or resizing the marker. Bullet selection does not change its diameter or stroke appearance.
 
-All connection macros draw 2pt colored strands with 4.5pt white underlays in their `O` variants. Most raised underlays are shortened by `0.12cm` at each end. The `\sLineO` and `\hLineO` underlays are deliberately unshortened: shortening only the white Bézier would change its endpoints, so it would no longer perfectly overlap the colored curve at crossings. Box and circle outlines also use 2pt strokes. All macros rely on TikZ's default line caps and joins; none applies rounded caps or joins.
+Solid/dashed/dotted choices are SVG icon buttons with accessible names, tooltips and `aria-pressed`. They update the hidden `stroke-style` backing select and dispatch its change event. A mixed selection has no pressed style icon. Controls with no eligible target are disabled or hidden. With no selection they edit creation defaults.
 
-Bullet nodes use 12px markers on the canvas and `0.09cm` radius in LaTeX so colored structural nodes remain visible; keep both sizes aligned.
+Supported widths are string values `"0.4"`, `"0.8"`, `"1.2"`, `"2"` and `"3"` (pt in TikZ). Strand appearance includes `lineStyle`, `strokeWidth`, `arrow` and `arrowSide`. The side is `"start"`, `"end"` or `"both"`; `arrow: false` disables arrowheads independently of the stored side.
 
-Diagram coordinates use `x=1.5cm,y=1cm`; TikZ lengths specified directly in centimeters, such as circle radii and shortened underlays, remain physical lengths.
+## Arrowheads and text clearance
 
-| Macro | Arguments and behavior |
+Both views use a small filled **Stealth** head. `arrowHeadDimensions()` defines shared proportions in points for stroke width `w`: length `3.5 + 1.25w`, width `2.6 + w`, inset `0.7 + 0.15w`. The editor uses 1.1 screen pixels per point, matching its stroke scale. This replaces the former large triangles measured as fractions of a cell. TikZ loads `arrows.meta` for the matching shape.
+
+`appendConnectionArrowHead()` samples the SVG path tangent at each enabled end. At a text endpoint it finds the first exit from the actual label rectangle, including a 2px gap, and puts the head there. `scheduleArrowHeadRender()` coalesces refreshes after rendering, zoom, resize and MathJax label layout, keeping heads small and clear of labels.
+
+TikZ measures text in TeX rather than inferring dimensions from browser pixels. `latexForDiagram()` first emits invisible named nodes (`text-<cell>`) with the same expressions and padding as the final labels. For arrow ends attached to nonempty text, `latexForConnection()` emits `\diagramArrowTrim` in the strand's inward tangent direction. `shorten <=` / `shorten >=` use the measured boundary distance plus 1pt. Visible white-backed labels are drawn last. This handles arrivals from above/below, either side and diagonally, including tall/wide formulas.
+
+Cap/cup export orders endpoints left-to-right. `latexStyleArgument()` reverses single-arrow direction and shortening sides when required; both-ended arrows retain both tips. Smooth curves with a zero endpoint tangent export as the equivalent straight segment so TikZ can orient and shorten their arrows correctly.
+
+## JSON files
+
+Save downloads sparse version 2 `string-diagram-studio.json`. `grid` stores dimensions; `nodes` contains occupied cells as `{ cell, type }`, optionally with text `label`, bullet `color` or explicit text `x`/`y`. Reference entries use `type: "point"` with no appearance. Shapes, IDs and every supported connection endpoint, colour, layer, stroke and arrow setting are preserved. Selection, clipboard, creation defaults and history are not saved.
+
+Version 1 dense `cells` files remain supported. The importer validates indices, types, labels, half-cell positions, shape IDs/geometry, port references, appearance values and geometry constraints before replacing the current diagram. Invalid files leave current work intact. Limits: 10 MB per file, 1000 per axis, 100,000 total cells and 100,000 connections. Successful open resets selection and both history stacks.
+
+## LaTeX reference
+
+Simplified strand macros share this prefix:
+
+```tex
+\command[<TikZ options>]{line width in pt}{color}{geometry...}
+```
+
+Options default to `solid`. The exporter adds dotted/dashed styles, an explicit Stealth shape, `<-` / `->` / `<->` and text shortening. Palette commands are `\schwarz`, `\grau`, `\gruen`, `\blau` and `\orange`.
+
+| Macro family | Geometry after width and colour |
 |---|---|
-| `\schwarz`, `\grau`, `\gruen`, `\blau`, `\orange` | Named colors corresponding to the editor's black, grey, green, blue, and orange choices. Keep these names synchronized with `diagramColors` in `index.html`. |
-| `\diagramDrawMult` | Internal 7-argument multiplication renderer: target x-offset or literal `center`; TikZ style; left source x; source y; horizontal source span; signed vertical target displacement; color. |
-| `\dMult` | `[\text{target offset or center}]{left x}{source y}{source span}{signed target height}{color}`. The optional target offset defaults to `center`. |
-| `\dLMult` | Same argument order as `\dMult`, with default target offset `0`; renders the left-leaning source arc. |
-| `\dRMult` | Same argument order as `\dMult`, with default target offset `1`; renders the right-leaning source arc. |
-| `\dMultO`, `\dLMultO`, `\dRMultO` | Raised multiplication variants. They paint a white underlay, shortened by `0.12cm` at both ends, then draw the colored connection. |
-| `\dPairing` | `{left x}{endpoint y}{horizontal span}{curve-height parameter}{color}{optional label}`. The curve opens upward in TikZ coordinates; its apex is at `y + height - 0.5`. |
-| `\dCopairing` | Same arguments as `\dPairing`; the curve opens downward, with apex at `y - height + 0.5`. |
-| `\dPairingO`, `\dCopairingO` | Raised variants that draw a white underlay shortened by `0.12cm` at both ends, then draw the colored pairing or copairing. |
-| `\sLine` | `{x1}{y1}{x2}{y2}{color}`. Draws a cubic Bézier strand with control x-coordinates at the endpoints and y-coordinates interpolated by 45/55 and 55/45. |
-| `\sLineO` | Same arguments as `\sLine`; draws an unshortened white underlay along the exact same curve, then the colored strand. Matching endpoints keep it centered at crossings. |
-| `\hLine` | `{x1}{y1}{x2}{y2}{color}`. Draws a cubic Bézier strand with control y-coordinates at the endpoints and x-coordinates interpolated by 45/55 and 55/45. |
-| `\hLineO` | Same arguments as `\hLine`; draws an unshortened white underlay along the exact same curve, then the colored strand. Matching endpoints keep it centered at crossings. |
-| `\dLine`, `\dLineO` | `{x1}{y1}{x2}{y2}{color}`. Straight wire and its raised white-underlay variant. |
-| `\dCurve`, `\dCurveO` | `{x1}{y1}{c1x}{c1y}{c2x}{c2y}{x2}{y2}{color}`. Cubic Bézier wire and its raised white-underlay variant. |
+| `\dCap`, `\dCup` | `{left x}{endpoint y}{horizontal span}`. Endpoints share y. Control-point displacement is 0.6 times the span, upward for cap/downward for cup in TikZ coordinates. |
+| `\dLine` | `{x1}{y1}{x2}{y2}`. |
+| `\sLine`, `\hLine` | `{x1}{y1}{x2}{y2}`. Vertical/horizontal endpoint tangents; other control coordinates interpolate by 45/55 and 55/45. |
+| `\dMult`, `\dLMult`, `\dRMult` | `{left source x}{source y}{source span}{signed target height}{target x offset}`. L/R variants align the target with a source. |
+| `\dBull` | `{x}{y}{color}` only; fixed filled bullet. |
+| `\diagramArrowTrim` | `{output length macro}{named text node}{distant physical x in cm}{distant physical y in cm}`. |
 
-The editor uses the `O` suffix to indicate a connection raised above crossings. Every exported segment family has an O-variant: `dMult`, `dLMult`, `dRMult`, `dPairing`, `dCopairing`, `dLine`, `dCurve`, `sLine`, and `hLine`. The exporter emits only the selected command; each O-macro owns its white underlay and colored stroke.
+Every strand family has an `O` variant with a 4.5pt white underlay. Most underlays shorten by 0.12cm at both ends. Smooth underlays are unshortened so the white and coloured Béziers overlap exactly. Appearance options, including arrows and text clearance, apply to the coloured stroke. Keep SVG and macro geometry synchronized.
 
-The **Smooth V** and **Smooth H** connection tools use **V** and **H**, respectively. Their live SVG previews and final strands share the exported geometry: `\sLine` keeps control x-coordinates at the endpoints for vertical tangents, while `\hLine` keeps control y-coordinates at the endpoints for horizontal tangents. In both, the other control coordinates interpolate the endpoint values by 45/55 and 55/45.
+The previous `dPairing`, `dCopairing`, `dCurve` and old argument signatures are superseded. When inserting new picture code into an existing document, update its support commands from **Download LaTeX Environment** too.
+
+## Extending the editor
+
+1. Add an accessible left-rail button with unique ID, tooltip, pressed state and consistent shortcut hint; cache its DOM reference.
+2. Register button, shortcut and activation callback through `registerTool()`. Use `activateToolMode()` when appropriate.
+3. Define data/metadata. Extend endpoint helpers for a new topology, or node maps for new per-node data.
+4. Update placement, hit testing, rendering, selection/deletion, moves, grid remapping, trim, mirror, clipboard, snapshots and save/import paths as appropriate. Appearance eligibility belongs in `selectedStyleTargets()`.
+5. Add matching LaTeX serialization and macros. Preserve text clearance and arrow direction when reordering geometry.
+6. Synchronize embedded and standalone `.tex` / `.json` sources. Preserve direct-file operation.
+
+The registry wires internal tools; it is not a runtime plug-in loader. DOM references are view objects rather than persistent data.
+
+## Verification
+
+Chromium/Playwright checks for this update covered square cells at desktop/phone sizes and different zooms, grid growth, both-ended arrows and JSON round-trips, mixed group styles, immutable reference markers, colour-only fixed-size bullets, cap/cup drag feedback and rejection, text clearance, round circles/legacy ports, half-cell text moves, mirroring, copy/paste and undo. No JavaScript runtime errors occurred.
+
+The startup diagram and an arrow fixture with tall/wide formulas, both arrow directions and reversed cup/cap ordering were exported and compiled with `pdflatex`. Inspect the PDF when changing arrow geometry or clearance: successful compilation alone does not establish visual correctness.
+
+For future changes, exercise the affected browser workflow and its saved/exported result. Include mixed selections for control changes and all endpoint families for coordinate changes. Check direct-file and HTTP loading when changing resource handling. MathJax network failure must not prevent editing/exporting.
+
+## Licence
+
+`LICENSE.md` contains Creative Commons Attribution-NonCommercial 4.0 International. Preserve the existing licence and attribution in modified distributions.

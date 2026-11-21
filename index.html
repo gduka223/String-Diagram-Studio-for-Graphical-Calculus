@@ -60,6 +60,21 @@
       border-bottom: 3px solid #76b8a8;
     }
 
+    .repository-banner {
+      padding: 7px 16px;
+      color: var(--ink);
+      background: #dff1ec;
+      border-bottom: 1px solid var(--line-strong);
+      text-align: center;
+      font-size: 13px;
+    }
+
+    .repository-banner a {
+      color: #175a7a;
+      font-weight: 700;
+      overflow-wrap: anywhere;
+    }
+
     .brand {
       min-width: 0;
       display: flex;
@@ -314,6 +329,23 @@
       gap: 3px;
     }
 
+    .mirror-controls button {
+      width: 34px;
+      padding: 5px;
+      display: grid;
+      place-items: center;
+    }
+    .mirror-controls svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+    .line-style-options { display: flex; gap: 5px; }
+    .line-style-button { flex: 1; min-width: 0; min-height: 34px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 3px; background: #fff; color: var(--ink); cursor: pointer; }
+    .line-style-button svg { display: block; width: 100%; height: 20px; fill: none; stroke: currentColor; stroke-width: 2; }
+    .line-style-button[aria-pressed="true"] { background: var(--mode-active); border-color: var(--mode-active-border); color: var(--mode-active-ink); }
+    .line-style-button:disabled { opacity: 0.45; cursor: default; }
+    .color-swatch:disabled { opacity: 0.45; cursor: default; }
+    .wire-alignment-guide { stroke: #007d72; stroke-width: 1; stroke-dasharray: 4 4; opacity: 0.7; vector-effect: non-scaling-stroke; pointer-events: none; }
+    .wire-preview.is-invalid { stroke: var(--focus); }
+    .wire-alignment-hint { fill: var(--focus); font: 12px "Segoe UI", sans-serif; pointer-events: none; }
+
     .move-button {
       width: 34px;
       min-width: 34px;
@@ -336,9 +368,15 @@
       display: flex;
       align-items: center;
       gap: 5px;
-      padding: 3px 5px;
+      padding: 3px 0;
+    }
+
+    .creation-style-controls {
+      display: grid;
+      gap: 10px;
+      padding: 12px;
+      background: #edf3f1;
       border: 1px solid var(--line);
-      background: var(--surface);
     }
     .creation-style-controls h3 {
       margin: 0;
@@ -387,8 +425,6 @@
     .creation-style-arrow input { accent-color: var(--hopf); }
     .creation-style-arrow-side[hidden] { display: none; }
     .creation-style-arrow-side select:disabled { opacity: 0.65; }
-
-    .color-palette[hidden] { display: none; }
 
     .connection-layer-controls {
       display: flex;
@@ -505,7 +541,15 @@
 
     .box-editor[hidden] { display: none; }
     .box-editor label { color: var(--ink-soft); font-size: 11px; }
-    .box-editor input {
+    .box-editor select {
+      min-height: 32px;
+      padding: 5px 7px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 3px;
+    }
+    .box-editor input:not([type="checkbox"]) {
       width: 132px;
       min-width: 110px;
       min-height: 32px;
@@ -628,7 +672,7 @@
       width: min(100%, 980px);
       flex: none;
       margin: 0 auto;
-      aspect-ratio: 18 / 8;
+      aspect-ratio: 1;
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
       grid-template-rows: repeat(8, minmax(0, 1fr));
@@ -666,7 +710,7 @@
 
     .wire-line {
       stroke: var(--connection-color, #171b1c);
-      stroke-width: 2.2;
+      stroke-width: 1.32;
       stroke-linecap: round;
       vector-effect: non-scaling-stroke;
       pointer-events: none;
@@ -675,8 +719,18 @@
     .wire-curve { fill: none; }
     .wire-line.is-selected {
       stroke: var(--connection-color, #171b1c);
-      stroke-width: 3.2;
-      filter: drop-shadow(0 0 2px var(--focus));
+      filter: drop-shadow(0 0 3px rgb(200 63 76 / 90%)) drop-shadow(0 0 1px rgb(200 63 76 / 75%));
+    }
+
+    .wire-selection-highlight {
+      fill: none;
+      stroke: var(--focus);
+      stroke-width: 8px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 0.55;
+      vector-effect: non-scaling-stroke;
+      pointer-events: none;
     }
 
     .wire-underlay {
@@ -703,6 +757,7 @@
     .wire-preview {
       stroke: #007d72;
       stroke-dasharray: 5 5;
+      stroke-width: 2.2;
       opacity: 0.75;
       pointer-events: none;
     }
@@ -726,7 +781,7 @@
 
     .diagram-box.is-selected {
       fill: #fff;
-      stroke-width: 3;
+      filter: drop-shadow(0 0 4px rgb(200 63 76 / 90%)) drop-shadow(0 0 1px rgb(200 63 76 / 75%));
     }
 
     .diagram-circle {
@@ -738,7 +793,7 @@
     }
 
     .diagram-circle.is-selected {
-      stroke-width: 3;
+      filter: drop-shadow(0 0 2px var(--focus));
     }
 
     .group-selection-node {
@@ -826,7 +881,7 @@
     .diagram-grid.is-circling { cursor: crosshair; }
     .diagram-grid.is-group-select { cursor: crosshair; }
     .grid-cell.is-group-selected { background: rgb(0 125 114 / 12%); }
-    .grid-cell.is-group-selected .marker {
+    .grid-cell.is-group-selected .marker:not(.bullet-marker) {
       color: #fff;
       background: #007d72;
       border: 2px solid #fff;
@@ -834,17 +889,6 @@
       filter: none;
     }
     .grid-cell.is-group-selected .marker.math-marker { color: #fff; }
-    .grid-cell.is-group-selected .marker.bullet-marker {
-      width: 13px;
-      height: 13px;
-      background: var(--bullet-color);
-      border: 2px solid #fff;
-      box-shadow: 0 0 0 1px var(--bullet-color);
-    }
-    .grid-cell.is-group-selected .point-marker {
-      background: var(--point-color, #b8d6e8);
-      box-shadow: 0 0 0 3px rgb(0 125 114 / 22%);
-    }
     .grid-cell.is-selected .marker { filter: drop-shadow(0 0 3px var(--focus)); }
     .grid-cell.is-selected .point-marker { box-shadow: 0 0 0 5px rgb(200 63 76 / 28%); }
     .grid-cell.is-multiplication-source .marker { box-shadow: 0 0 0 4px rgb(200 63 76 / 48%); }
@@ -978,6 +1022,10 @@
   <script id="mathjax-script" defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
 </head>
 <body>
+  <div class="repository-banner">
+    Check out the GitHub repository for other versions:
+    <a href="https://github.com/gduka223/String-Diagram-Studio-for-Graphical-Calculus" target="_blank" rel="noopener noreferrer">https://github.com/gduka223/String-Diagram-Studio-for-Graphical-Calculus</a>
+  </div>
   <header class="app-header">
     <div class="brand">
       <span class="brand-mark" aria-hidden="true">S</span>
@@ -1001,12 +1049,12 @@
             <span>Line</span>
             <kbd class="key-hint" aria-hidden="true">L</kbd>
           </button>
-          <button class="diagram-tool" id="evaluation-button" type="button" aria-label="Evaluation" aria-keyshortcuts="E" aria-pressed="false" title="Click or tap two nodes in order, or drag between them, to draw a cap">
+          <button class="diagram-tool" id="evaluation-button" type="button" aria-label="Evaluation" aria-keyshortcuts="E" aria-pressed="false" title="Connect two nodes at the same height by clicking or dragging to draw a cap">
             <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><path d="M4 20 C10 4, 38 4, 44 20" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
             <span>Eval</span>
             <kbd class="key-hint" aria-hidden="true">E</kbd>
           </button>
-          <button class="diagram-tool" id="coevaluation-button" type="button" aria-label="Coevaluation" aria-keyshortcuts="C" aria-pressed="false" title="Click or tap two nodes in order, or drag between them, to draw a cup">
+          <button class="diagram-tool" id="coevaluation-button" type="button" aria-label="Coevaluation" aria-keyshortcuts="C" aria-pressed="false" title="Connect two nodes at the same height by clicking or dragging to draw a cup">
             <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><path d="M4 4 C10 20, 38 20, 44 4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
             <span>Co-eval</span>
             <kbd class="key-hint" aria-hidden="true">C</kbd>
@@ -1032,7 +1080,7 @@
             <kbd class="key-hint" aria-hidden="true">M</kbd>
           </button>
           <button class="diagram-tool" id="box-button" type="button" aria-label="Draw box" aria-keyshortcuts="X" aria-pressed="false" title="Draw across tiles to place a box; on touchscreens, double-tap, hold, and drag">
-            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><rect x="11" y="3" width="26" height="18" stroke="currentColor" stroke-width="2.5" stroke-dasharray="4 2" /></svg>
+            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><rect x="11" y="3" width="26" height="18" stroke="currentColor" stroke-width="2.5" /></svg>
             <span>Box</span>
             <kbd class="key-hint" aria-hidden="true">X</kbd>
           </button>
@@ -1042,7 +1090,7 @@
             <kbd class="key-hint" aria-hidden="true">O</kbd>
           </button>
           <button class="diagram-tool" id="text-node-button" type="button" aria-label="Text node" aria-keyshortcuts="T" aria-pressed="false" title="Place a LaTeX text node">
-            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><path d="M12 5h24M24 5v15M18 20h12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" /></svg>
+            <svg viewBox="0 0 48 24" fill="none" aria-hidden="true"><rect x="10" y="2" width="28" height="20" rx="4" stroke="currentColor" stroke-width="2" /><path d="M18 7h12M24 7v11" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
             <span>Text node</span>
             <kbd class="key-hint" aria-hidden="true">T</kbd>
           </button>
@@ -1052,15 +1100,20 @@
       <section class="menu-group creation-style-controls" aria-labelledby="creation-style-heading">
         <h3 id="creation-style-heading">Item style</h3>
         <p class="creation-style-context" id="creation-style-context" aria-live="polite">Defaults for new strands, boxes, and circles</p>
-        <label class="creation-style-field" for="stroke-style">
-          Line style
-          <select id="stroke-style" aria-label="Item line style">
+        <div class="creation-style-field">
+          <span id="line-style-label">Line style</span>
+          <div class="line-style-options" role="group" aria-labelledby="line-style-label">
+            <button type="button" class="line-style-button" data-line-style="solid" aria-label="Solid line" title="Solid line" aria-pressed="true"><svg viewBox="0 0 44 20" aria-hidden="true"><path d="M4 10h36" /></svg></button>
+            <button type="button" class="line-style-button" data-line-style="dashed" aria-label="Dashed line" title="Dashed line" aria-pressed="false"><svg viewBox="0 0 44 20" aria-hidden="true"><path d="M4 10h36" stroke-dasharray="7 5" /></svg></button>
+            <button type="button" class="line-style-button" data-line-style="dotted" aria-label="Dotted line" title="Dotted line" aria-pressed="false"><svg viewBox="0 0 44 20" aria-hidden="true"><path d="M4 10h36" stroke-dasharray="0.1 6" stroke-linecap="round" /></svg></button>
+          </div>
+          <select id="stroke-style" aria-label="Item line style" hidden>
             <option value="mixed" disabled>Mixed</option>
             <option value="solid">Solid</option>
             <option value="dotted">Dotted</option>
             <option value="dashed">Dashed</option>
           </select>
-        </label>
+        </div>
         <label class="creation-style-field" for="stroke-width">
           Thickness
           <select id="stroke-width" aria-label="Item thickness">
@@ -1092,6 +1145,7 @@
             <option value="mixed" disabled>Mixed</option>
             <option value="end">End node</option>
             <option value="start">Start node</option>
+            <option value="both">Both ends</option>
           </select>
         </label>
       </section>
@@ -1099,7 +1153,7 @@
       <div class="active-tool" id="active-tool" data-category="">
         <span class="field-label">Current mode</span>
         <span class="active-label" id="active-label">Selection mode</span>
-        <p class="active-instructions" id="active-instructions">Click empty tiles to place structural nodes. Draw straight lines by dragging between nodes; on touchscreens, double-tap, hold, and drag. Click geometric shapes to select them and change their appearance.</p>
+        <p class="active-instructions" id="active-instructions">Click empty tiles to place blue nodes or click an object to select it. Drag across the grid to group-select nodes and shapes; all shape ports must be inside the selection. On touchscreens, double-tap, hold, and drag.</p>
       </div>
       <p class="rail-footer">Read diagrams bottom to top</p>
     </aside>
@@ -1131,8 +1185,8 @@
             </button>
           </div>
           <div class="mirror-controls" role="group" aria-label="Mirror entire graph">
-            <button class="action-button" id="mirror-vertical-button" type="button" aria-label="Mirror graph top to bottom" title="Flip the graph top to bottom">Flip top/bottom</button>
-            <button class="action-button" id="mirror-horizontal-button" type="button" aria-label="Mirror graph left to right" title="Flip the graph left to right">Flip left/right</button>
+            <button class="action-button" id="mirror-vertical-button" type="button" aria-label="Mirror graph top to bottom" title="Flip the graph top to bottom"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18" stroke-dasharray="2 2" /><path d="m7 3 5 6H7Zm0 18 5-6H7Z" /><path d="M18 3v6m-2-2 2 2 2-2M18 21v-6m-2 2 2-2 2 2" /></svg></button>
+            <button class="action-button" id="mirror-horizontal-button" type="button" aria-label="Mirror graph left to right" title="Flip the graph left to right"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18" stroke-dasharray="2 2" /><path d="m3 7 6 5V7Zm18 0-6 5V7Z" /><path d="M3 18h6m-2-2 2 2-2 2M21 18h-6m2-2-2 2 2 2" /></svg></button>
           </div>
           <button class="action-button mode-toggle" id="select-mode-button" type="button" aria-pressed="true" aria-keyshortcuts="Space" title="Return to selection mode with Space">Select <kbd class="key-hint">Space</kbd></button>
           <button class="action-button delete-selection" id="delete-selected-button" type="button" aria-label="Delete selected item" aria-keyshortcuts="Delete Backspace" title="Delete selected item (Delete; Backspace also works)" disabled>
@@ -1149,13 +1203,6 @@
           <div class="box-editor" id="text-node-editor" hidden>
             <label for="text-node-label">Node LaTeX</label>
             <input id="text-node-label" type="text" maxlength="256">
-          </div>
-          <div class="color-palette" id="color-palette" role="group" aria-label="Selected item color" hidden>
-            <button class="color-swatch" type="button" data-color="black" style="--swatch-color:#171b1c" aria-label="Black" title="Black" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="grey" style="--swatch-color:#7a8586" aria-label="Grey" title="Grey" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="green" style="--swatch-color:#007d72" aria-label="Green" title="Green" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="blue" style="--swatch-color:#3477a8" aria-label="Blue" title="Blue" aria-pressed="false"></button>
-            <button class="color-swatch" type="button" data-color="orange" style="--swatch-color:#cf7622" aria-label="Orange" title="Orange" aria-pressed="false"></button>
           </div>
           <div class="connection-layer-controls" id="connection-layer-controls" role="group" aria-label="Connection crossing order" hidden>
             <button class="layer-button" id="connection-up-button" type="button" aria-label="Raise connection to front" title="Raise above all other raised connections" aria-pressed="false">
@@ -1259,7 +1306,18 @@
 \usepackage{amsmath,amssymb}
 \usepackage{xcolor}
 \usepackage{tikz}
+\usetikzlibrary{arrows.meta}
 
+% Measure the distance from a named text node's centre to its boundary in the
+% strand's tangent direction, plus a 1pt gap. #1 is the output length macro;
+% #2 is the node name; #3/#4 are a distant point in physical cm.
+\makeatletter
+\newcommand{\diagramArrowTrim}[4]{%
+  \pgfpointdiff{\pgfpointanchor{#2}{center}}%
+    {\pgfpointshapeborder{#2}{\pgfpoint{#3cm}{#4cm}}}%
+  \pgfmathsetlengthmacro{#1}{veclen(\pgf@x,\pgf@y)+1pt}%
+}
+\makeatother
 % Editor palette colors: schwarz=black, grau=gray!60, gruen=green!50!black,
 % blau=blue!70!black, and orange=orange!85!black.
 \newcommand{\schwarz}{black}
@@ -1387,178 +1445,6 @@
   \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
     (#4 + #8,#5 + #7 * 0.5) -- (#4 + #8,#5 + #7);
   \dRMult[#1]{#2}{#3}{#4}{#5}{#6}{#7}{#8}%
-% Internal multiplication renderer. Arguments:
-% #1 target x-offset from the left source, or "center"
-% #2 TikZ stroke style, #3 left source x, #4 source y, #5 source span
-% #6 signed vertical displacement to the target, #7 stroke color
-\newcommand{\diagramDrawMult}[7]{%
-  \begingroup
-  \def\dMultTargetOffset{#1}%
-  \def\dMultCenter{center}%
-  \draw[#2,color=#7]
-    (#3,#4) -- (#3,#4 + #6 * 0.2)
-    .. controls (#3,#4 + #6 * 0.5) .. (#3 + #5 * 0.25,#4 + #6 * 0.5)
-    -- (#3 + #5 * 0.5,#4 + #6 * 0.5)
-    -- (#3 + #5 * 0.75,#4 + #6 * 0.5)
-    .. controls (#3 + #5,#4 + #6 * 0.5) .. (#3 + #5,#4 + #6 * 0.2)
-    -- (#3 + #5,#4);
-  \ifx\dMultTargetOffset\dMultCenter
-    \draw[#2,color=#7]
-      (#3 + #5 * 0.5,#4 + #6 * 0.5) -- (#3 + #5 * 0.5,#4 + #6);
-  \else
-    \draw[#2,color=#7]
-      (#3 + #1,#4 + #6 * 0.5) -- (#3 + #1,#4 + #6);
-  \fi
-  \endgroup
-}
-
-% \dMult[<target offset|center>]{left x}{source y}{source span}{target height}{color}
-% Central-source multiplication; target offset defaults to "center".
-\newcommand{\dMult}[6][center]{%
-  \diagramDrawMult{#1}{line width=2pt}{#2}{#3}{#4}{#5}{#6}%
-}
-
-% \dLMult[<target offset>]{left x}{source y}{source span}{target height}{color}
-% Left-source-aligned multiplication; target offset defaults to 0.
-\newcommand{\dLMult}[6][0]{%
-  \draw[line width=2pt,color=#6]
-    (#2,#3) -- (#2,#3 + #5 * 0.5)
-    -- (#2 + #4 * 0.75,#3 + #5 * 0.5)
-    .. controls (#2 + #4,#3 + #5 * 0.5) .. (#2 + #4,#3 + #5 * 0.2)
-    -- (#2 + #4,#3);
-  \draw[line width=2pt,color=#6]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-}
-
-% \dRMult[<target offset>]{left x}{source y}{source span}{target height}{color}
-% Right-source-aligned multiplication; target offset defaults to 1.
-\newcommand{\dRMult}[6][1]{%
-  \draw[line width=2pt,color=#6]
-    (#2,#3) -- (#2,#3 + #5 * 0.2)
-    .. controls (#2,#3 + #5 * 0.5) .. (#2 + #4 * 0.25,#3 + #5 * 0.5)
-    -- (#2 + #4,#3 + #5 * 0.5)
-    -- (#2 + #4,#3);
-  \draw[line width=2pt,color=#6]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-}
-
-% Multiplication O variants paint a 4.5pt white underlay, shortened by 0.12cm at both ends.
-\newcommand{\dMultO}[6][center]{%
-  \diagramDrawMult{#1}{line width=4.5pt,shorten <=0.12cm,shorten >=0.12cm}{#2}{#3}{#4}{#5}{white}%
-  \dMult[#1]{#2}{#3}{#4}{#5}{#6}%
-}
-\newcommand{\dLMultO}[6][0]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2,#3) -- (#2,#3 + #5 * 0.5)
-    -- (#2 + #4 * 0.75,#3 + #5 * 0.5)
-    .. controls (#2 + #4,#3 + #5 * 0.5) .. (#2 + #4,#3 + #5 * 0.2)
-    -- (#2 + #4,#3);
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-  \dLMult[#1]{#2}{#3}{#4}{#5}{#6}%
-}
-\newcommand{\dRMultO}[6][1]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2,#3) -- (#2,#3 + #5 * 0.2)
-    .. controls (#2,#3 + #5 * 0.5) .. (#2 + #4 * 0.25,#3 + #5 * 0.5)
-    -- (#2 + #4,#3 + #5 * 0.5)
-    -- (#2 + #4,#3);
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#2 + #1,#3 + #5 * 0.5) -- (#2 + #1,#3 + #5);
-  \dRMult[#1]{#2}{#3}{#4}{#5}{#6}%
-}
-
-% \dPairing{left x}{endpoint y}{span}{height}{color}{label}
-% Evaluation cap; the optional label is placed at its apex.
-\newcommand{\dPairing}[6]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) -- (#1,#2 + #4 - 1)
-    .. controls (#1,#2 + #4 - 0.5) .. (#1 + #3 * 0.48,#2 + #4 - 0.5)
-    -- (#1 + #3 * 0.52,#2 + #4 - 0.5)
-    .. controls (#1 + #3,#2 + #4 - 0.5) .. (#1 + #3,#2 + #4 - 1)
-    -- (#1 + #3,#2);
-  \if\relax\detokenize{#6}\relax
-  \else
-    \node at (#1 + #3 * 0.5,#2 + #4 - 0.5) {#6};
-  \fi
-}
-
-% \dCopairing has the same arguments as \dPairing and draws a coevaluation cup.
-\newcommand{\dCopairing}[6]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) -- (#1,#2 - #4 + 1)
-    .. controls (#1,#2 - #4 + 0.5) .. (#1 + #3 * 0.48,#2 - #4 + 0.5)
-    -- (#1 + #3 * 0.52,#2 - #4 + 0.5)
-    .. controls (#1 + #3,#2 - #4 + 0.5) .. (#1 + #3,#2 - #4 + 1)
-    -- (#1 + #3,#2);
-  \if\relax\detokenize{#6}\relax
-  \else
-    \node at (#1 + #3 * 0.5,#2 - #4 + 0.5) {#6};
-  \fi
-}
-
-% Raised pairing/copaired variants use the same underlay convention.
-\newcommand{\dPairingO}[6]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#1,#2) -- (#1,#2 + #4 - 1)
-    .. controls (#1,#2 + #4 - 0.5) .. (#1 + #3 * 0.48,#2 + #4 - 0.5)
-    -- (#1 + #3 * 0.52,#2 + #4 - 0.5)
-    .. controls (#1 + #3,#2 + #4 - 0.5) .. (#1 + #3,#2 + #4 - 1)
-    -- (#1 + #3,#2);
-  \dPairing{#1}{#2}{#3}{#4}{#5}{#6}%
-}
-\newcommand{\dCopairingO}[6]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm]
-    (#1,#2) --
-    (#1,#2 - #4 + 1) .. controls (#1,#2 - #4 + 0.5) .. (#1 + #3 * 0.48,#2 - #4 + 0.5)
-    -- (#1 + #3 * 0.52,#2 - #4 + 0.5)
-    .. controls (#1 + #3,#2 - #4 + 0.5) .. (#1 + #3,#2 - #4 + 1)
-    -- (#1 + #3,#2);
-  \dCopairing{#1}{#2}{#3}{#4}{#5}{#6}%
-}
-
-% All connection strands use 2pt colored strokes and 4.5pt white underlays.
-% Most O variants shorten the underlay at both ends. Smooth O variants stay
-% unshortened so the white and colored Bezier paths share endpoints and align.
-% All use TikZ's default line caps and joins.
-% \dLine{x1}{y1}{x2}{y2}{color}: straight strand.
-\newcommand{\dLine}[5]{%
-  \draw[line width=2pt,color=#5] (#1,#2) -- (#3,#4);
-}
-\newcommand{\dLineO}[5]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#1,#2) -- (#3,#4);
-  \dLine{#1}{#2}{#3}{#4}{#5}%
-}
-
-% \dCurve{x1}{y1}{c1x}{c1y}{c2x}{c2y}{x2}{y2}{color}: cubic Bézier.
-\newcommand{\dCurve}[9]{%
-  \draw[line width=2pt,color=#9] (#1,#2) .. controls (#3,#4) and (#5,#6) .. (#7,#8);
-}
-\newcommand{\dCurveO}[9]{%
-  \draw[line width=4.5pt,color=white,shorten <=0.12cm,shorten >=0.12cm] (#1,#2) .. controls (#3,#4) and (#5,#6) .. (#7,#8);
-  \dCurve{#1}{#2}{#3}{#4}{#5}{#6}{#7}{#8}{#9}%
-}
-
-% \sLine{x1}{y1}{x2}{y2}{color}: cubic Bézier with vertical endpoint tangents.
-\newcommand{\sLine}[5]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) .. controls (#1,#2 * 0.45 + #4 * 0.55) and (#3,#2 * 0.55 + #4 * 0.45) .. (#3,#4);
-}
-\newcommand{\sLineO}[5]{%
-  \draw[line width=4.5pt,color=white]
-    (#1,#2) .. controls (#1,#2 * 0.45 + #4 * 0.55) and (#3,#2 * 0.55 + #4 * 0.45) .. (#3,#4);
-  \sLine{#1}{#2}{#3}{#4}{#5}%
-}
-
-% \hLine{x1}{y1}{x2}{y2}{color}: cubic Bézier with horizontal endpoint tangents.
-\newcommand{\hLine}[5]{%
-  \draw[line width=2pt,color=#5]
-    (#1,#2) .. controls (#1 * 0.45 + #3 * 0.55,#2) and (#1 * 0.55 + #3 * 0.45,#4) .. (#3,#4);
-}
-\newcommand{\hLineO}[5]{%
-  \draw[line width=4.5pt,color=white]
-    (#1,#2) .. controls (#1 * 0.45 + #3 * 0.55,#2) and (#1 * 0.55 + #3 * 0.45,#4) .. (#3,#4);
-  \hLine{#1}{#2}{#3}{#4}{#5}%
 }
 
 % A bullet is a filled point: {x}{y}{color}.
@@ -1639,16 +1525,14 @@
       text: { label: "Text node", symbol: "", category: "text" }
     };
     const selectionModeInstructions = "Click empty tiles to place blue nodes or click an object to select it. Drag across the grid to group-select nodes and shapes; all shape ports must be inside the selection. On touchscreens, double-tap, hold, and drag.";
-    const multiplicationInstructions = "Click or tap two source nodes or shape ports on the same row, then click or tap a target between them on a different row.";
-    const selectionModeInstructions = "Click empty tiles to place structural nodes. Draw straight lines by dragging between nodes; on touchscreens, double-tap, hold, and drag. Click geometric shapes to select them and change their appearance.";
-    const multiplicationInstructions = "Click or tap two source nodes or shape ports on the same row, then click or tap a target above or below them whose horizontal position is between the sources.";
-    const multiplicationSecondSourceInstructions = "Source 1 selected. Select a second source node or shape port on the same row.";
+    const multiplicationInstructions = "Click or tap two source nodes or shape ports on the same height, then click or tap a target between them on a different row.";
+    const multiplicationSecondSourceInstructions = "Source 1 selected. Select a second source node or shape port on the same height.";
     const multiplicationTargetInstructions = "Two sources selected. Select a target node between the sources on a different row.";
     const boxInstructions = "Draw across tiles to place a box. On touchscreens, double-tap, hold, and drag.";
     const circleInstructions = "Place a circle in a tile.";
     const bulletInstructions = "Place a bullet node; it appears in the LaTeX output.";
-    const evaluationInstructions = "Connect two distinct nodes on the same row by clicking or tapping each, or drag between them, to draw an evaluation cap.";
-    const coevaluationInstructions = "Connect two distinct nodes on the same row by clicking or tapping each, or drag between them, to draw a coevaluation cup.";
+    const evaluationInstructions = "Connect two distinct nodes on the same height by clicking or tapping each, or drag between them, to draw an evaluation cap.";
+    const coevaluationInstructions = "Connect two distinct nodes on the same height by clicking or tapping each, or drag between them, to draw a coevaluation cup.";
     const smoothLineInstructions = "Connect two nodes by clicking or tapping each, or drag between them (on touchscreens, double-tap, hold, and drag) to draw a smooth curve with vertical tangents at both ends.";
     const smoothHorizontalLineInstructions = "Connect two nodes by clicking or tapping each, or drag between them (on touchscreens, double-tap, hold, and drag) to draw a smooth curve with horizontal tangents at both ends.";
     const straightLineInstructions = "Connect two nodes or shape ports by clicking each one or dragging between them. On touchscreens, double-tap, hold, and drag.";
@@ -1672,8 +1556,7 @@
      */
     /**
      * Ordinary connections have from/to endpoints; multiplications have two sources and one target.
-     * @typedef {{from: DiagramEndpoint, to: DiagramEndpoint, kind?: "evaluation" | "coevaluation" | "smooth-line" | "smooth-horizontal" | null, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean, arrowSide?: "start" | "end"} | {kind: "multiplication", sources: [DiagramEndpoint, DiagramEndpoint], target: DiagramEndpoint, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean, arrowSide?: "start" | "end"}} DiagramConnection
-     * @typedef {{from: DiagramEndpoint, to: DiagramEndpoint, kind?: "evaluation" | "coevaluation" | "smooth-line" | "smooth-horizontal" | null, color?: string, layer?: string} | {kind: "multiplication", sources: [DiagramEndpoint, DiagramEndpoint], target: DiagramEndpoint, color?: string, layer?: string}} DiagramConnection
+     * @typedef {{from: DiagramEndpoint, to: DiagramEndpoint, kind?: "evaluation" | "coevaluation" | "smooth-line" | "smooth-horizontal" | null, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean, arrowSide?: "start" | "end" | "both"} | {kind: "multiplication", sources: [DiagramEndpoint, DiagramEndpoint], target: DiagramEndpoint, color?: string, layer?: string, lineStyle?: string, strokeWidth?: string, arrow?: boolean, arrowSide?: "start" | "end" | "both"}} DiagramConnection
      */
 
     // The startup diagram is loaded from the embedded, synchronized JSON source.
@@ -1695,9 +1578,9 @@
     const bulletColors = new Map();
     /** @type {DiagramConnection[]} */
     const connections = [];
-    /** @type {Array<{id: number, x: number, y: number, width: number, height: number, color?: string, text?: string}>} */
+    /** @type {Array<{id: number, x: number, y: number, width: number, height: number, color?: string, text?: string, lineStyle?: string, strokeWidth?: string}>} */
     const boxes = [];
-    /** @type {Array<{id: number, x: number, y: number, radius: number, color?: string, text?: string}>} */
+    /** @type {Array<{id: number, x: number, y: number, radius: number, color?: string, text?: string, lineStyle?: string, strokeWidth?: string}>} */
     const circles = [];
     let nextBoxId = 1;
     let nextCircleId = 1;
@@ -1785,7 +1668,6 @@
     const toolShortcuts = new Map();
     const textNodeEditor = document.getElementById("text-node-editor");
     const textNodeInput = document.getElementById("text-node-label");
-    const colorPalette = document.getElementById("color-palette");
     const colorSwatches = [...document.querySelectorAll(".color-swatch")];
     const creationAppearance = {
       color: "black",
@@ -1917,6 +1799,7 @@
           console.error("Unable to render a LaTeX expression", error);
         } finally {
           mathTypesetRunning = false;
+          scheduleArrowHeadRender();
           if (mathTypesetAgain) {
             mathTypesetAgain = false;
             scheduleMathTypeset();
@@ -1950,8 +1833,8 @@
         const candidates = [
           { side: "north", x: circle.x, y: circle.y - circle.radius },
           { side: "south", x: circle.x, y: circle.y + circle.radius },
-          { side: "east", x: circle.x + circle.radius / latexXScale, y: circle.y },
-          { side: "west", x: circle.x - circle.radius / latexXScale, y: circle.y }
+          { side: "east", x: circle.x + circle.radius, y: circle.y },
+          { side: "west", x: circle.x - circle.radius, y: circle.y }
         ];
         candidates.forEach((candidate) => {
           const distance = Math.hypot(
@@ -1973,6 +1856,7 @@
       grid.style.width = `${gridWidth}px`;
       canvasBoard.style.width = `${gridWidth + 56}px`;
       zoomLevel.textContent = `${Math.round(canvasZoom * 100)}%`;
+      scheduleArrowHeadRender();
       zoomOutButton.disabled = canvasZoom <= 0.5;
       zoomInButton.disabled = canvasZoom >= 3;
     }
@@ -1980,7 +1864,7 @@
     function updateGridDimensions() {
       grid.style.gridTemplateColumns = `repeat(${columns}, minmax(0, 1fr))`;
       grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
-      grid.style.aspectRatio = `${columns * latexXScale} / ${rows * latexYScale}`;
+      grid.style.aspectRatio = `${columns} / ${rows}`;
       grid.setAttribute("aria-label", `${columns} by ${rows} diagram grid`);
       wireLayer.setAttribute("viewBox", `0 0 ${columns} ${rows}`);
       connectionArrowLayer.setAttribute("viewBox", `0 0 ${columns} ${rows}`);
@@ -2074,7 +1958,7 @@
         label: "Multiplication",
         category: "tensor",
         instructions: multiplicationInstructions,
-        announcement: "Select the first of two source nodes on the same row"
+        announcement: "Select the first of two source nodes on the same height"
       });
     }
 
@@ -2187,7 +2071,6 @@
           cell.setAttribute("aria-label", `Orientation point, column ${column}, row ${row}`);
           const point = document.createElement("span");
           point.className = "point-marker";
-          if (pointColors.has(index)) point.style.setProperty("--point-color", diagramColors[pointColors.get(index)].css);
           point.setAttribute("aria-hidden", "true");
           cell.append(point);
         } else {
@@ -2212,7 +2095,7 @@
         const bottom = box.y + box.height;
         const inside = point.x >= box.x && point.x <= right && point.y >= box.y && point.y <= bottom;
         const edgeDistance = Math.min(Math.abs(point.x - box.x), Math.abs(point.x - right), Math.abs(point.y - box.y), Math.abs(point.y - bottom));
-        if (inside && edgeDistance > 0.25) return index;
+        if (inside && edgeDistance > 0.08) return index;
       }
       return null;
     }
@@ -2220,7 +2103,7 @@
     function circleAtInterior(point) {
       for (let index = circles.length - 1; index >= 0; index -= 1) {
         const circle = circles[index];
-        if (Math.hypot((point.x - circle.x) * latexXScale, (point.y - circle.y) * latexYScale) <= circle.radius) return index;
+        if (Math.hypot(point.x - circle.x, point.y - circle.y) <= circle.radius) return index;
       }
       return null;
     }
@@ -2330,7 +2213,7 @@
       const cellWidth = rect.width / columns;
       const cellHeight = rect.height / rows;
       const distance = Math.hypot((point.x - circle.x) * cellWidth, (point.y - circle.y) * cellHeight);
-      const radius = circle.radius * latexYScale * cellHeight;
+      const radius = circle.radius * cellHeight;
       grid.style.cursor = Math.abs(distance - radius) <= circleBoundaryCursorTolerancePx
         ? "grab"
         : distance < radius ? "pointer" : "";
@@ -2387,8 +2270,6 @@
       updateCircleEditor();
       updateTextNodeEditor();
       renderGrid();
-      updateColorPalette();
-      renderConnections();
       updateActions();
       announce("Circle selected; edit its LaTeX label or press Delete to remove it");
     }
@@ -2443,8 +2324,7 @@
             label: "orientation point",
             supportsArrow: false,
             supportsStroke: false,
-            supportsColor: true,
-            setColor: (color) => pointColors.set(index, color)
+            supportsColor: false
           });
         } else if (cells[index] === "bullet") {
           targets.push({
@@ -2455,6 +2335,8 @@
             supportsColor: true,
             setColor: (color) => bulletColors.set(index, color)
           });
+        } else if (cells[index] === "text") {
+          targets.push({ item: {}, label: "text node", supportsArrow: false, supportsStroke: false, supportsColor: false });
         }
       });
 
@@ -2497,59 +2379,54 @@
       strokeStyleSelect.value = commonStyleValue(strokeTargets, (target) => target.item.lineStyle || "solid", creationAppearance.lineStyle);
       strokeWidthSelect.value = commonStyleValue(strokeTargets, (target) => target.item.strokeWidth || "1.2", creationAppearance.strokeWidth);
       const arrowValues = arrowTargets.map((target) => target.item.arrow === true);
-      strokeArrowInput.checked = arrowValues.length > 0 && arrowValues.every(Boolean);
+      strokeArrowInput.checked = targets.length ? arrowValues.length > 0 && arrowValues.every(Boolean) : creationAppearance.arrow;
       strokeArrowInput.indeterminate = arrowValues.some(Boolean) && !arrowValues.every(Boolean);
-      strokeArrowSideSelect.value = commonStyleValue(arrowTargets, (target) => target.item.arrowSide || creationAppearance.arrowSide, creationAppearance.arrowSide);
+      strokeArrowSideSelect.value = commonStyleValue(arrowTargets, (target) => target.item.arrowSide || "end", creationAppearance.arrowSide);
       strokeArrowControl.hidden = targets.length > 0 ? arrowTargets.length === 0 : false;
       strokeArrowSideControl.hidden = targets.length > 0 ? arrowTargets.length === 0 : !creationAppearance.arrow;
       strokeArrowSideSelect.disabled = !strokeArrowInput.checked && !strokeArrowInput.indeterminate;
+      const hasSelection = targets.length > 0;
+      strokeStyleSelect.disabled = hasSelection && !strokeTargets.length;
+      strokeWidthSelect.disabled = hasSelection && !strokeTargets.length;
+      document.querySelectorAll("[data-line-style]").forEach((button) => {
+        button.disabled = strokeStyleSelect.disabled;
+        button.setAttribute("aria-pressed", String(button.dataset.lineStyle === strokeStyleSelect.value));
+      });
+      const colorTargets = targets.filter((target) => target.supportsColor);
+      colorSwatches.forEach((swatch) => { swatch.disabled = hasSelection && !colorTargets.length; });
       creationStyleContext.textContent = targets.length
         ? `Editing ${targets.length} selected item${targets.length === 1 ? "" : "s"}`
         : "Defaults for new strands, boxes, and circles";
       colorSwatches.forEach((swatch) => {
-        swatch.setAttribute("aria-pressed", String(targets.length > 0 && targets.every((target) =>
-          target.supportsColor && (target.item.color || "black") === swatch.dataset.color)));
+        swatch.setAttribute("aria-pressed", String(colorTargets.length ? colorTargets.every((target) =>
+          (target.item.color || "black") === swatch.dataset.color) : !hasSelection && creationAppearance.color === swatch.dataset.color));
       });
     }
 
-    function applyStrokeControls() {
+    function applyStrokeControls(event) {
+      // A mixed selection must retain every property the user did not change.
+      const property = { "stroke-style": "lineStyle", "stroke-width": "strokeWidth",
+        "stroke-arrow": "arrow", "stroke-arrow-side": "arrowSide" }[event.currentTarget.id];
+      const value = property === "arrow" ? event.currentTarget.checked : event.currentTarget.value;
+      if (!property || value === "mixed") return;
       const targets = selectedStyleTargets();
       if (!targets.length) {
-        creationAppearance.lineStyle = strokeStyleSelect.value;
-        creationAppearance.strokeWidth = strokeWidthSelect.value;
-        creationAppearance.arrow = strokeArrowInput.checked;
-        creationAppearance.arrowSide = strokeArrowSideSelect.value;
+        creationAppearance[property] = value;
         updateItemStyleControls();
         announce("Style for new strands, boxes, and circles updated");
         return;
       }
-
-      const lineStyle = strokeStyleSelect.value;
-      const strokeWidth = strokeWidthSelect.value;
-      const arrowSide = strokeArrowSideSelect.value;
-      const hasChanges = targets.some((target) => target.supportsStroke &&
-        (target.item.lineStyle !== lineStyle || target.item.strokeWidth !== strokeWidth)) ||
-        targets.some((target) => target.supportsArrow &&
-          (target.item.arrow !== strokeArrowInput.checked || target.item.arrowSide !== arrowSide));
-      if (!hasChanges) {
-        updateItemStyleControls();
-        return;
+      const eligible = targets.filter((target) => property === "arrow" || property === "arrowSide"
+        ? target.supportsArrow : target.supportsStroke);
+      const changed = eligible.filter((target) => target.item[property] !== value);
+      if (changed.length) {
+        snapshot();
+        changed.forEach((target) => { target.item[property] = value; });
+        renderConnections();
+        updateActions();
       }
-      snapshot();
-      targets.forEach((target) => {
-        if (target.supportsStroke) {
-          target.item.lineStyle = lineStyle;
-          target.item.strokeWidth = strokeWidth;
-        }
-        if (target.supportsArrow) {
-          target.item.arrow = strokeArrowInput.checked;
-          target.item.arrowSide = arrowSide;
-        }
-      });
-      announce(`Style updated for ${targets.length} selected item${targets.length === 1 ? "" : "s"}`);
-      renderConnections();
-      updateActions();
       updateItemStyleControls();
+      announce(`Style updated for ${eligible.length} selected item${eligible.length === 1 ? "" : "s"}`);
     }
 
     function newItemAppearance(includeArrow = false) {
@@ -2572,25 +2449,6 @@
         textNodeDraft = textNodeValues.get(selectedCellIndex) ?? "";
         textNodeInput.value = textNodeDraft;
       }
-    }
-
-    function updateColorPalette() {
-      const canEditColor = activeOperationKey !== "multiplication";
-      const hasConnection = canEditColor && selectedConnectionIndex !== null;
-      const hasBullet = canEditColor && selectedCellIndex !== null && cells[selectedCellIndex] === "bullet";
-      const hasBox = canEditColor && selectedBoxIndex !== null;
-      const hasCircle = canEditColor && selectedCircleIndex !== null;
-      colorPalette.hidden = !hasConnection && !hasBullet && !hasBox && !hasCircle;
-      const color = hasConnection
-        ? (connections[selectedConnectionIndex]?.color || "black")
-        : (hasBullet
-          ? (bulletColors.get(selectedCellIndex) || "black")
-          : (hasBox
-            ? (boxes[selectedBoxIndex]?.color || "black")
-            : (hasCircle ? (circles[selectedCircleIndex]?.color || "black") : "black")));
-      colorSwatches.forEach((swatch) => {
-        swatch.setAttribute("aria-pressed", String((hasConnection || hasBullet || hasBox || hasCircle) && swatch.dataset.color === color));
-      });
     }
 
     function updateConnectionLayerControls() {
@@ -2619,34 +2477,6 @@
       announce(layer === "up" ? "Connection raised above crossings" : "Connection lowered below crossings");
       renderConnections();
       updateActions();
-    }
-
-    function applyColorToSelection(color) {
-      if (!diagramColors[color] || activeOperationKey === "multiplication") return;
-      if (selectedConnectionIndex !== null) {
-        snapshot();
-        connections[selectedConnectionIndex].color = color;
-        announce(`${color[0].toUpperCase()}${color.slice(1)} connection color`);
-        renderConnections();
-        updateActions();
-      } else if (selectedCellIndex !== null && cells[selectedCellIndex] === "bullet") {
-        snapshot();
-        bulletColors.set(selectedCellIndex, color);
-        announce(`${color[0].toUpperCase()}${color.slice(1)} bullet color`);
-        renderGrid();
-      } else if (selectedBoxIndex !== null) {
-        snapshot();
-        boxes[selectedBoxIndex].color = color;
-        announce(`${color[0].toUpperCase()}${color.slice(1)} box boundary`);
-        renderConnections();
-        updateActions();
-      } else if (selectedCircleIndex !== null) {
-        snapshot();
-        circles[selectedCircleIndex].color = color;
-        announce(`${color[0].toUpperCase()}${color.slice(1)} circle boundary`);
-        renderConnections();
-        updateActions();
-      }
     }
 
     function commitBoxLabel() {
@@ -2917,6 +2747,12 @@
 
     function latexPoint(index) {
       const point = endpointFor(index);
+      // Circle radii are physical cm in TikZ, so compensate only at export.
+      if (typeof index !== "number" && index.circleId !== undefined) {
+        const circle = circles.find((candidate) => candidate.id === index.circleId);
+        return { x: circle.x + (point.x - circle.x) / latexXScale,
+          y: rows - circle.y - (point.y - circle.y) / latexYScale };
+      }
       return { x: point.x, y: rows - point.y };
     }
 
@@ -2933,7 +2769,7 @@
         });
     }
 
-    function latexForConnection(connection) {
+    function latexForConnectionCommand(connection) {
       const latexColor = diagramColors[connection.color || "black"].latex;
       const isRaised = connection.layer === "up";
       if (connection.kind === "multiplication") {
@@ -2949,11 +2785,6 @@
             : "dMult";
         const argumentsList = `{${connection.strokeWidth || "1.2"}}{${latexColor}}{${latexNumber(sources[0].x)}}{${latexNumber(sources[0].y)}}{${latexNumber(width)}}{${latexNumber(height)}}{${latexNumber(targetOffset)}}`;
         return `\\${command}${isRaised ? "O" : ""}${latexStyleArgument(connection)}${argumentsList}`;
-        const argumentsList = `{${latexNumber(sources[0].x)}}{${latexNumber(sources[0].y)}}{${latexNumber(width)}}{${latexNumber(height)}}{${latexColor}}`;
-        if (Math.abs(targetOffset) < 0.001) return `\\dLMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}]${argumentsList}`;
-        if (Math.abs(targetOffset - width) < 0.001) return `\\dRMult${isRaised ? "O" : ""}[${latexNumber(targetOffset)}]${argumentsList}`;
-        const offsetArgument = Math.abs(targetOffset - width * 0.5) < 0.001 ? "" : `[${latexNumber(targetOffset)}]`;
-        return `\\dMult${isRaised ? "O" : ""}${offsetArgument}${argumentsList}`;
       }
 
       const start = latexPoint(connection.from);
@@ -2962,14 +2793,14 @@
       if (!curvedConnectionTypes.has(connection.kind)) {
         const command = isRaised ? "dLineO" : "dLine";
         return `\\${command}${latexStyleArgument(connection, true)}{${strokeWidth}}{${latexColor}}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}`;
-      if (!curvedConnectionTypes.has(connection.kind)) {
-        const command = isRaised ? "dLineO" : "dLine";
-        return `\\${command}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
       }
 
       if (smoothConnectionTypes.has(connection.kind)) {
         const isVertical = connection.kind === "smooth-line";
-        const command = isVertical ? "sLine" : "hLine";
+        // A zero endpoint tangent is geometrically a straight segment. Export it
+        // directly so TikZ can shorten and orient its arrowheads unambiguously.
+        const straight = isVertical ? Math.abs(start.y - end.y) < 0.001 : Math.abs(start.x - end.x) < 0.001;
+        const command = straight ? "dLine" : isVertical ? "sLine" : "hLine";
         return `\\${command}${isRaised ? "O" : ""}${latexStyleArgument(connection, true)}{${strokeWidth}}{${latexColor}}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}`;
       }
 
@@ -2980,12 +2811,46 @@
       return `\\${command}${latexStyleArgument(connection, true, reversed)}{${strokeWidth}}{${latexColor}}{${latexNumber(left.x)}}{${latexNumber(left.y)}}{${latexNumber(right.x - left.x)}}`;
     }
 
+    function arrowHeadDimensions(strokeWidth = "1.2") {
+      const width = Number(strokeWidth);
+      return { length: 3.5 + 1.25 * width, width: 2.6 + width, inset: 0.7 + 0.15 * width };
+    }
+
+    function arrowEnds(item) {
+      return item.arrow ? (item.arrowSide === "both" ? ["start", "end"] : [item.arrowSide === "start" ? "start" : "end"]) : [];
+    }
+
+    function connectionInwardDirection(connection, side) {
+      const start = latexPoint(connection.from);
+      const end = latexPoint(connection.to);
+      const dx = (side === "start" ? end.x - start.x : start.x - end.x);
+      const dy = (side === "start" ? end.y - start.y : start.y - end.y);
+      if (connection.kind === "evaluation") return { x: 0, y: 1 };
+      if (connection.kind === "coevaluation") return { x: 0, y: -1 };
+      if (connection.kind === "smooth-line" && Math.abs(dy) > 0.001) return { x: 0, y: Math.sign(dy) };
+      if (connection.kind === "smooth-horizontal" && Math.abs(dx) > 0.001) return { x: Math.sign(dx), y: 0 };
+      return { x: dx, y: dy };
+    }
+
+    function arrowTextEndpoint(connection, side) {
+      const endpoint = side === "start" ? connection.from : connection.to;
+      return typeof endpoint === "number" && cells[endpoint] === "text" &&
+        (textNodeValues.get(endpoint) ?? "").trim() ? endpoint : null;
+    }
+
     function latexStyleArgument(item, includeArrow = false, reverseDirection = false) {
       const options = [];
       if (item.lineStyle === "dotted" || item.lineStyle === "dashed") options.push(item.lineStyle);
       if (includeArrow && item.arrow) {
-        const arrowAtStart = (item.arrowSide === "start") !== reverseDirection;
-        options.push(arrowAtStart ? "<-" : "->");
+        const dimensions = arrowHeadDimensions(item.strokeWidth);
+        options.push(`>={Stealth[length=${latexNumber(dimensions.length)}pt,width=${latexNumber(dimensions.width)}pt,inset=${latexNumber(dimensions.inset)}pt]}`);
+        const ends = arrowEnds(item);
+        options.push(ends.length === 2 ? "<->" : ((ends[0] === "start") !== reverseDirection ? "<-" : "->"));
+        ends.forEach((side) => {
+          if (arrowTextEndpoint(item, side) === null) return;
+          const pathSide = (side === "start") !== reverseDirection ? "<" : ">";
+          options.push(`shorten ${pathSide}=\\diagram${side === "start" ? "Start" : "End"}Trim`);
+        });
       }
       return options.length > 0 ? `[${options.join(",")}]` : "";
     }
@@ -2997,25 +2862,19 @@
     }
 
     function latexForConnection(connection) {
-      return latexForConnectionCommand(connection);
-        return `\\${command}${isRaised ? "O" : ""}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
-      }
-
-      const isPairing = connection.kind === "evaluation";
-      if (Math.abs(start.y - end.y) < 0.001 && Math.abs(start.x - end.x) > 0.001) {
-        const [left, right] = start.x < end.x ? [start, end] : [end, start];
-        const span = Math.hypot(right.x - left.x, right.y - left.y);
-        const height = Math.min(2.2, Math.max(0.8, span * 0.35)) + 0.5;
-        const command = isPairing ? (isRaised ? "dPairingO" : "dPairing") : (isRaised ? "dCopairingO" : "dCopairing");
-        return `\\${command}{${latexNumber(left.x)}}{${latexNumber(left.y)}}{${latexNumber(right.x - left.x)}}{${latexNumber(height)}}{${latexColor}}{}`;
-      }
-
-      const direction = isPairing ? 1 : -1;
-      const depth = Math.min(2.2, Math.max(0.8, Math.hypot(end.x - start.x, end.y - start.y) * 0.35));
-      const firstControl = { x: start.x, y: start.y + direction * depth };
-      const secondControl = { x: end.x, y: end.y + direction * depth };
-      const command = isRaised ? "dCurveO" : "dCurve";
-      return `\\${command}{${latexNumber(start.x)}}{${latexNumber(start.y)}}{${latexNumber(firstControl.x)}}{${latexNumber(firstControl.y)}}{${latexNumber(secondControl.x)}}{${latexNumber(secondControl.y)}}{${latexNumber(end.x)}}{${latexNumber(end.y)}}{${latexColor}}`;
+      const trims = [];
+      if (connection.kind !== "multiplication") arrowEnds(connection).forEach((side) => {
+        const endpoint = arrowTextEndpoint(connection, side);
+        if (endpoint === null) return;
+        const point = latexPoint(endpoint);
+        const direction = connectionInwardDirection(connection, side);
+        const length = Math.hypot(direction.x * latexXScale, direction.y * latexYScale) || 1;
+        const farX = point.x * latexXScale + direction.x * latexXScale / length * 100;
+        const farY = point.y * latexYScale + direction.y * latexYScale / length * 100;
+        trims.push(`\\diagramArrowTrim{\\diagram${side === "start" ? "Start" : "End"}Trim}{text-${endpoint}}{${latexNumber(farX)}}{${latexNumber(farY)}}`);
+      });
+      const command = latexForConnectionCommand(connection);
+      return trims.length ? `${trims.join("\n  ")}\n  ${command}` : command;
     }
 
     function latexForDiagram() {
@@ -3030,16 +2889,24 @@
         const lowerLeft = { x: box.x, y: rows - box.y - box.height };
         const upperRight = { x: box.x + box.width, y: rows - box.y };
         const latexColor = diagramColors[box.color || "black"].latex;
-        code.push(`  \\filldraw[draw=${latexColor},fill=white,line width=2pt] ${latexCoordinate(lowerLeft)} rectangle ${latexCoordinate(upperRight)};`);
+        code.push(`  \\filldraw[draw=${latexColor},fill=white,${latexStrokeOptions(box, "1.2")}] ${latexCoordinate(lowerLeft)} rectangle ${latexCoordinate(upperRight)};`);
       });
 
       circles.forEach((circle) => {
         const center = { x: circle.x, y: rows - circle.y };
         const latexColor = diagramColors[circle.color || "black"].latex;
-        code.push(`  \\filldraw[draw=${latexColor},fill=white,line width=2pt] ${latexCoordinate(center)} circle[radius=${latexNumber(circle.radius)}cm];`);
+        code.push(`  \\filldraw[draw=${latexColor},fill=white,${latexStrokeOptions(circle, "2")}] ${latexCoordinate(center)} circle[radius=${latexNumber(circle.radius)}cm];`);
         if (circle.text?.trim()) code.push(`  \\node[inner sep=2pt] at ${latexCoordinate(center)} {$${circle.text}$};`);
       });
 
+      // Invisible named nodes let TeX measure labels before the strands are drawn.
+      // The visible white-backed labels are painted last, as before.
+      cells.forEach((operation, index) => {
+        const text = textNodeValues.get(index) ?? "";
+        if (operation === "text" && text.trim()) {
+          code.push(`  \\node[inner sep=2pt,outer sep=0pt,opacity=0] (text-${index}) at ${latexCoordinate(latexPoint(index))} {$${text}$};`);
+        }
+      });
       orderedConnectionEntries().forEach(({ connection }) => code.push(`  ${latexForConnection(connection)}`));
 
       boxes.forEach((box) => {
@@ -3129,43 +2996,75 @@
     }
 
     function appendConnectionArrowHead(element, connection) {
-      if (!connection.arrow) return;
       const pathLength = element.getTotalLength();
-      if (pathLength <= 0) return;
-
+      if (!connection.arrow || pathLength <= 0) return;
       const rect = grid.getBoundingClientRect();
       const scaleX = rect.width / columns;
       const scaleY = rect.height / rows;
-      const isStartArrow = connection.arrowSide === "start";
-      const arrowTip = element.getPointAtLength(isStartArrow ? 0 : pathLength);
-      const tangentDistance = Math.min(0.15, pathLength);
-      const tangentPoint = element.getPointAtLength(isStartArrow
-        ? tangentDistance
-        : pathLength - tangentDistance);
-      const tipX = arrowTip.x * scaleX;
-      const tipY = arrowTip.y * scaleY;
-      const directionX = tipX - tangentPoint.x * scaleX;
-      const directionY = tipY - tangentPoint.y * scaleY;
-      const directionLength = Math.hypot(directionX, directionY);
-      if (directionLength === 0) return;
+      const dimensions = arrowHeadDimensions(connection.strokeWidth);
+      arrowEnds(connection).forEach((side) => {
+        const isStart = side === "start";
+        const endpoint = isStart ? connection.from : connection.to;
+        const label = typeof endpoint === "number" && cells[endpoint] === "text"
+          ? grid.querySelector(`.grid-cell[data-index="${endpoint}"] .math-marker`) : null;
+        const bounds = label?.getBoundingClientRect();
+        const pointAt = (distance) => element.getPointAtLength(isStart ? distance : pathLength - distance);
+        const insideLabel = (point) => bounds &&
+          rect.left + point.x * scaleX >= bounds.left - 2 && rect.left + point.x * scaleX <= bounds.right + 2 &&
+          rect.top + point.y * scaleY >= bounds.top - 2 && rect.top + point.y * scaleY <= bounds.bottom + 2;
+        let distance = 0;
+        if (insideLabel(pointAt(0))) {
+          // Find the first exit from the actual label, then refine its boundary.
+          const step = Math.max(pathLength / 200, 1 / Math.min(scaleX, scaleY));
+          while (distance < pathLength && insideLabel(pointAt(distance))) distance = Math.min(pathLength, distance + step);
+          if (insideLabel(pointAt(distance))) return;
+          let low = Math.max(0, distance - step), high = distance;
+          for (let i = 0; i < 12; i++) {
+            const mid = (low + high) / 2;
+            if (insideLabel(pointAt(mid))) low = mid; else high = mid;
+          }
+          distance = high;
+        }
+        const arrowTip = pointAt(distance);
+        const tangentPoint = pointAt(Math.min(pathLength, distance + Math.min(0.01, pathLength / 10)));
+        const tipX = arrowTip.x * scaleX, tipY = arrowTip.y * scaleY;
+        const dx = tipX - tangentPoint.x * scaleX, dy = tipY - tangentPoint.y * scaleY;
+        const length = Math.hypot(dx, dy);
+        if (!length) return;
+        const unitX = dx / length, unitY = dy / length;
+        const headLength = dimensions.length * 1.1;
+        const halfWidth = dimensions.width * 1.1 / 2;
+        const baseX = tipX - unitX * headLength, baseY = tipY - unitY * headLength;
+        const notchX = baseX + unitX * dimensions.inset * 1.1;
+        const notchY = baseY + unitY * dimensions.inset * 1.1;
+        const head = document.createElementNS(wireLayer.namespaceURI, "path");
+        head.classList.add("connection-arrow-head");
+        head.dataset.arrowSide = side;
+        if (element.dataset.connectionIndex !== undefined) head.dataset.connectionIndex = element.dataset.connectionIndex;
+        head.setAttribute("d", [
+          `M ${tipX / scaleX} ${tipY / scaleY}`,
+          `L ${(baseX - unitY * halfWidth) / scaleX} ${(baseY + unitX * halfWidth) / scaleY}`,
+          `L ${notchX / scaleX} ${notchY / scaleY}`,
+          `L ${(baseX + unitY * halfWidth) / scaleX} ${(baseY - unitX * halfWidth) / scaleY}`, "Z"
+        ].join(" "));
+        head.style.fill = diagramColors[connection.color || "black"].css;
+        connectionArrowLayer.append(head);
+      });
+    }
 
-      const unitX = directionX / directionLength;
-      const unitY = directionY / directionLength;
-      const baseX = tipX - unitX * 0.34 * scaleY;
-      const baseY = tipY - unitY * 0.34 * scaleY;
-      const halfWidth = 0.13 * scaleY;
-      const sideX = -unitY * halfWidth;
-      const sideY = unitX * halfWidth;
-      const head = document.createElementNS(wireLayer.namespaceURI, "path");
-      head.classList.add("connection-arrow-head");
-      head.setAttribute("d", [
-        `M ${tipX / scaleX} ${tipY / scaleY}`,
-        `L ${(baseX + sideX) / scaleX} ${(baseY + sideY) / scaleY}`,
-        `L ${(baseX - sideX) / scaleX} ${(baseY - sideY) / scaleY}`,
-        "Z"
-      ].join(" "));
-      head.style.fill = diagramColors[connection.color || "black"].css;
-      connectionArrowLayer.append(head);
+    let arrowHeadFrame = null;
+    function scheduleArrowHeadRender() {
+      if (arrowHeadFrame !== null) return;
+      arrowHeadFrame = requestAnimationFrame(() => {
+        arrowHeadFrame = null;
+        connectionArrowLayer.replaceChildren();
+        wireLayer.querySelectorAll(".wire-line[data-connection-index]").forEach((element) => {
+          const connection = connections[Number(element.dataset.connectionIndex)];
+          if (connection && connection.kind !== "multiplication") appendConnectionArrowHead(element, connection);
+        });
+        const preview = wireLayer.querySelector(".wire-preview:not(.is-invalid)");
+        if (preview) appendConnectionArrowHead(preview, { ...creationAppearance, from: wireStartEndpoint });
+      });
     }
 
     function applyStrokeAppearance(element, item, fallbackWidth) {
@@ -3182,14 +3081,9 @@
       if (window.MathJax?.typesetClear) window.MathJax.typesetClear([grid]);
       wireLayer.replaceChildren();
       connectionArrowLayer.replaceChildren();
-      wireLayer.append(hitArea);
-    }
-
-    function renderConnections() {
-      if (window.MathJax?.typesetClear) window.MathJax.typesetClear([grid]);
-      wireLayer.replaceChildren();
       grid.querySelectorAll(".box-label, .circle-label").forEach((label) => label.remove());
-      boxes.forEach(({ x, y, width, height, text, color }, index) => {
+      boxes.forEach((box, index) => {
+        const { x, y, width, height, text, color } = box;
         const rectangle = document.createElementNS(wireLayer.namespaceURI, "rect");
         rectangle.classList.add("diagram-box");
         if (index === selectedBoxIndex) rectangle.classList.add("is-selected");
@@ -3198,6 +3092,7 @@
         rectangle.setAttribute("width", String(width));
         rectangle.setAttribute("height", String(height));
         rectangle.style.stroke = diagramColors[color || "black"].css;
+        applyStrokeAppearance(rectangle, box, 1.2);
         wireLayer.append(rectangle);
 
         const label = index === selectedBoxIndex && boxLabelDraft !== null ? boxLabelDraft : (text || "");
@@ -3220,18 +3115,19 @@
         element.dataset.circleId = String(circle.id);
         element.setAttribute("cx", String(circle.x));
         element.setAttribute("cy", String(circle.y));
-        element.setAttribute("rx", String(circle.radius / latexXScale));
+        element.setAttribute("rx", String(circle.radius));
         element.setAttribute("ry", String(circle.radius));
         element.style.setProperty("--circle-color", diagramColors[circle.color || "black"].css);
+        applyStrokeAppearance(element, circle, 2);
         wireLayer.append(element);
 
         const label = index === selectedCircleIndex && circleLabelDraft !== null ? circleLabelDraft : (circle.text || "");
         if (label.trim()) {
           const labelElement = document.createElement("div");
           labelElement.classList.add("circle-label");
-          labelElement.style.left = `${((circle.x - circle.radius / latexXScale) / columns) * 100}%`;
+          labelElement.style.left = `${((circle.x - circle.radius) / columns) * 100}%`;
           labelElement.style.top = `${((circle.y - circle.radius) / rows) * 100}%`;
-          labelElement.style.width = `${(2 * circle.radius / latexXScale / columns) * 100}%`;
+          labelElement.style.width = `${(2 * circle.radius / columns) * 100}%`;
           labelElement.style.height = `${(2 * circle.radius / rows) * 100}%`;
           labelElement.textContent = `\\(${label}\\)`;
           grid.append(labelElement);
@@ -3285,11 +3181,14 @@
         if (kind === "multiplication") {
           const path = document.createElementNS(wireLayer.namespaceURI, "path");
           path.classList.add("wire-line", "wire-curve", "wire-multiplication");
-          if (index === selectedConnectionIndex) path.classList.add("is-selected");
+          const isSelected = index === selectedConnectionIndex;
+          if (isSelected) path.classList.add("is-selected");
           path.dataset.connectionIndex = String(index);
           path.setAttribute("d", multiplicationPath(endpointFor(sources[0]), endpointFor(sources[1]), endpointFor(target)));
           path.style.setProperty("--connection-color", connectionColor);
+          applyStrokeAppearance(path, connection, 1.2);
           appendRaisedUnderlay(path, connection);
+          appendConnectionSelectionHighlight(path, isSelected);
           wireLayer.append(path);
           appendConnectionHitArea(path);
         } else if (curvedConnectionTypes.has(kind)) {
@@ -3297,12 +3196,14 @@
           const end = endpointFor(to);
           const curve = document.createElementNS(wireLayer.namespaceURI, "path");
           curve.classList.add("wire-line", "wire-curve");
-          if (index === selectedConnectionIndex) curve.classList.add("is-selected");
+          const isSelected = index === selectedConnectionIndex;
+          if (isSelected) curve.classList.add("is-selected");
           curve.dataset.connectionIndex = String(index);
           curve.setAttribute("d", curvedConnectionPath(start, end, kind));
           curve.style.setProperty("--connection-color", connectionColor);
           applyStrokeAppearance(curve, connection, 1.2);
           appendRaisedUnderlay(curve, connection);
+          appendConnectionSelectionHighlight(curve, isSelected);
           wireLayer.append(curve);
           appendConnectionArrowHead(curve, connection);
           appendConnectionHitArea(curve);
@@ -3311,7 +3212,8 @@
           const end = endpointFor(to);
           const line = document.createElementNS(wireLayer.namespaceURI, "line");
           line.classList.add("wire-line");
-          if (index === selectedConnectionIndex) line.classList.add("is-selected");
+          const isSelected = index === selectedConnectionIndex;
+          if (isSelected) line.classList.add("is-selected");
           line.dataset.connectionIndex = String(index);
           line.setAttribute("x1", String(start.x));
           line.setAttribute("y1", String(start.y));
@@ -3320,6 +3222,7 @@
           line.style.setProperty("--connection-color", connectionColor);
           applyStrokeAppearance(line, connection, 1.2);
           appendRaisedUnderlay(line, connection);
+          appendConnectionSelectionHighlight(line, isSelected);
           wireLayer.append(line);
           appendConnectionArrowHead(line, connection);
           appendConnectionHitArea(line);
@@ -3338,12 +3241,34 @@
 
       if (wireStartEndpoint !== null && wirePreview && wireMoved) {
         const start = endpointFor(wireStartEndpoint);
+        const needsAlignment = wireStartConnectionKind === "evaluation" || wireStartConnectionKind === "coevaluation";
+        const invalidAlignment = needsAlignment && Math.abs(start.y - wirePreview.y) > 0.001;
+        if (needsAlignment) {
+          const guide = document.createElementNS(wireLayer.namespaceURI, "line");
+          guide.classList.add("wire-alignment-guide");
+          guide.setAttribute("x1", "0"); guide.setAttribute("x2", String(columns));
+          guide.setAttribute("y1", String(start.y)); guide.setAttribute("y2", String(start.y));
+          wireLayer.append(guide);
+          if (invalidAlignment) {
+            const hint = document.createElementNS(wireLayer.namespaceURI, "text");
+            hint.classList.add("wire-alignment-hint");
+            // Cancel the SVG viewBox scale so the hint stays readable at every zoom.
+            const scale = grid.getBoundingClientRect().width / columns;
+            const x = Math.max(4, Math.min(start.x * scale, columns * scale - 170));
+            const y = Math.max(16, start.y * scale - 10);
+            hint.setAttribute("transform", `scale(${1 / scale})`);
+            hint.setAttribute("x", String(x)); hint.setAttribute("y", String(y));
+            hint.textContent = "End at the same height";
+            wireLayer.append(hint);
+          }
+        }
         if (wireStartConnectionKind) {
           const curve = document.createElementNS(wireLayer.namespaceURI, "path");
           curve.classList.add("wire-line", "wire-curve", "wire-preview");
           curve.setAttribute("d", curvedConnectionPath(start, wirePreview, wireStartConnectionKind));
+          curve.classList.toggle("is-invalid", invalidAlignment);
           wireLayer.append(curve);
-          appendConnectionArrowHead(curve, creationAppearance);
+          if (!invalidAlignment) appendConnectionArrowHead(curve, { ...creationAppearance, from: wireStartEndpoint });
         } else {
           const line = document.createElementNS(wireLayer.namespaceURI, "line");
           line.classList.add("wire-line", "wire-preview");
@@ -3356,8 +3281,9 @@
         }
       }
       grid.append(connectionArrowLayer);
+      scheduleArrowHeadRender();
       updateCircleEditor();
-      updateColorPalette();
+      updateItemStyleControls();
       updateConnectionLayerControls();
       updateMoveControls();
       scheduleMathTypeset();
@@ -3514,9 +3440,9 @@
       });
       boxes.forEach((box) => includeBounds(box.x, box.y, box.x + box.width, box.y + box.height));
       circles.forEach((circle) => includeBounds(
-        circle.x - circle.radius / latexXScale,
+        circle.x - circle.radius,
         circle.y - circle.radius,
-        circle.x + circle.radius / latexXScale,
+        circle.x + circle.radius,
         circle.y + circle.radius
       ));
 
@@ -3640,7 +3566,6 @@
       });
       points.forEach((cell) => {
         const node = { cell, type: "point" };
-        if (pointColors.has(cell)) node.color = pointColors.get(cell);
         nodes.push(node);
       });
       nodes.sort((first, second) => first.cell - second.cell);
@@ -3701,7 +3626,7 @@
         if (item.arrow !== undefined && (!allowArrow || typeof item.arrow !== "boolean")) {
           fail(`${name} has an unsupported arrow setting.`);
         }
-        if (item.arrowSide !== undefined && (!allowArrow || !["start", "end"].includes(item.arrowSide))) {
+        if (item.arrowSide !== undefined && (!allowArrow || !["start", "end", "both"].includes(item.arrowSide))) {
           fail(`${name} has an unsupported arrow side.`);
         }
         const appearance = {};
@@ -3778,10 +3703,8 @@
           seenCells.add(index);
           if (node.type === "point") {
             savedPoints.add(index);
-            if (node.color !== undefined) {
-              if (!isColor(node.color)) fail("An orientation point has an unsupported color.");
-              savedPointColors.set(index, node.color);
-            }
+            // Accept legacy point colors, but reference points are no longer styled.
+            if (node.color !== undefined && !isColor(node.color)) fail("An orientation point has an unsupported color.");
             return;
           }
           if (!validCellKinds.has(node.type)) fail("The save file contains an unknown node type.");
@@ -3829,7 +3752,7 @@
         }
         if (box.text !== undefined && (typeof box.text !== "string" || box.text.length > 256)) fail("A box label is invalid or too long.");
         if (box.color !== undefined && !isColor(box.color)) fail("A box has an unsupported color.");
-        return { id, x, y, width, height, color: box.color || "black", text: box.text || "" };
+        return { id, x, y, width, height, color: box.color || "black", text: box.text || "", ...readStrokeAppearance(box, false, "A box") };
       });
       const circleIds = new Set();
       const savedCircles = data.circles.map((circle) => {
@@ -3837,13 +3760,13 @@
         const id = validateShapeId(circle.id, circleIds, "circle");
         const { x, y, radius } = circle;
         if (![x, y, radius].every(isHalfStep) || radius <= 0 ||
-          !within(x - radius / latexXScale, savedColumns) || !within(x + radius / latexXScale, savedColumns) ||
+          !within(x - radius, savedColumns) || !within(x + radius, savedColumns) ||
           !within(y - radius, savedRows) || !within(y + radius, savedRows)) {
           fail("A circle has invalid coordinates or dimensions.");
         }
         if (circle.text !== undefined && (typeof circle.text !== "string" || circle.text.length > 256)) fail("A circle label is invalid or too long.");
         if (circle.color !== undefined && !isColor(circle.color)) fail("A circle has an unsupported color.");
-        return { id, x, y, radius, color: circle.color || "black", text: circle.text || "" };
+        return { id, x, y, radius, color: circle.color || "black", text: circle.text || "", ...readStrokeAppearance(circle, false, "A circle") };
       });
       const boxesById = new Map(savedBoxes.map((box) => [box.id, box]));
       const circlesById = new Map(savedCircles.map((circle) => [circle.id, circle]));
@@ -3876,11 +3799,10 @@
           const expected = {
             north: { x: circle.x, y: circle.y - circle.radius },
             south: { x: circle.x, y: circle.y + circle.radius },
-            east: { x: circle.x + circle.radius / latexXScale, y: circle.y },
-            west: { x: circle.x - circle.radius / latexXScale, y: circle.y }
+            east: { x: circle.x + circle.radius, y: circle.y },
+            west: { x: circle.x - circle.radius, y: circle.y }
           }[endpoint.side];
-          const legacyX = endpoint.side === "east" ? circle.x + circle.radius
-            : endpoint.side === "west" ? circle.x - circle.radius : expected.x;
+          const legacyX = circle.x + (expected.x - circle.x) / latexXScale;
           if (Math.abs(endpoint.y - expected.y) > 0.001 ||
             (Math.abs(endpoint.x - expected.x) > 0.001 && Math.abs(endpoint.x - legacyX) > 0.001)) {
             fail("A connection's circle port coordinates do not match its side.");
@@ -3902,7 +3824,8 @@
         if (!isRecord(connection)) fail("A connection entry is malformed.");
         if (connection.color !== undefined && !isColor(connection.color)) fail("A connection has an unsupported color.");
         if (connection.layer !== undefined && !["up", "down"].includes(connection.layer)) fail("A connection has an unsupported layer.");
-        const common = { color: connection.color || "black" };
+        const appearance = readStrokeAppearance(connection, true, "A connection");
+        const common = { color: connection.color || "black", ...appearance };
         if (connection.layer !== undefined) common.layer = connection.layer;
         if (connection.kind === "multiplication") {
           if (!Array.isArray(connection.sources) || connection.sources.length !== 2) fail("A multiplication must have exactly two sources.");
@@ -3930,7 +3853,7 @@
           const first = endpointPositionInSavedDiagram(from);
           const second = endpointPositionInSavedDiagram(to);
           if (Math.abs(first.y - second.y) > 0.001 || Math.abs(first.x - second.x) < 0.001) {
-            fail("A cup or cap must join two distinct nodes on the same row.");
+            fail("A cup or cap must join two distinct nodes on the same height.");
           }
         }
         return { from, to, kind, ...common };
@@ -4042,8 +3965,8 @@
       return [
         { circleId: circle.id, side: "north", x: circle.x, y: circle.y - circle.radius },
         { circleId: circle.id, side: "south", x: circle.x, y: circle.y + circle.radius },
-        { circleId: circle.id, side: "east", x: circle.x + circle.radius / latexXScale, y: circle.y },
-        { circleId: circle.id, side: "west", x: circle.x - circle.radius / latexXScale, y: circle.y }
+        { circleId: circle.id, side: "east", x: circle.x + circle.radius, y: circle.y },
+        { circleId: circle.id, side: "west", x: circle.x - circle.radius, y: circle.y }
       ];
     }
 
@@ -4182,8 +4105,8 @@
         includePoint({ x: box.x + box.width, y: box.y + box.height });
       });
       selectedCircles.forEach((circle) => {
-        includePoint({ x: circle.x - circle.radius / latexXScale, y: circle.y - circle.radius });
-        includePoint({ x: circle.x + circle.radius / latexXScale, y: circle.y + circle.radius });
+        includePoint({ x: circle.x - circle.radius, y: circle.y - circle.radius });
+        includePoint({ x: circle.x + circle.radius, y: circle.y + circle.radius });
       });
       selectedConnections.forEach((index) => {
         connectionEndpoints(connections[index]).forEach((endpoint) => includePoint(endpointFor(endpoint)));
@@ -4270,9 +4193,9 @@
         allBounds.bottom = Math.max(allBounds.bottom, box.y + box.height);
       });
       diagramClipboard.circles.forEach((circle) => {
-        allBounds.left = Math.min(allBounds.left, circle.x - circle.radius / latexXScale);
+        allBounds.left = Math.min(allBounds.left, circle.x - circle.radius);
         allBounds.top = Math.min(allBounds.top, circle.y - circle.radius);
-        allBounds.right = Math.max(allBounds.right, circle.x + circle.radius / latexXScale);
+        allBounds.right = Math.max(allBounds.right, circle.x + circle.radius);
         allBounds.bottom = Math.max(allBounds.bottom, circle.y + circle.radius);
       });
       const clampOffset = (offset, start, end, limit) => {
@@ -4526,7 +4449,7 @@
       }
       for (const circleId of selection.circleIds) {
         const circle = circles.find((candidate) => candidate.id === circleId);
-        if (!circle || circle.x - circle.radius / latexXScale + dx < 0 || circle.x + circle.radius / latexXScale + dx > columns ||
+        if (!circle || circle.x - circle.radius + dx < 0 || circle.x + circle.radius + dx > columns ||
           circle.y - circle.radius + dy < 0 || circle.y + circle.radius + dy > rows) return false;
       }
 
@@ -4669,14 +4592,20 @@
           announce(`${color[0].toUpperCase()}${color.slice(1)} set for ${targets.length} selected item${targets.length === 1 ? "" : "s"}`);
           return;
         }
+        if (selectedStyleTargets().length) return;
         creationAppearance.color = color;
         updateItemStyleControls();
         announce(`${color[0].toUpperCase()}${color.slice(1)} set for new strands, boxes, and circles`);
       });
     });
+    document.querySelectorAll("[data-line-style]").forEach((button) => {
+      button.addEventListener("click", () => {
+        strokeStyleSelect.value = button.dataset.lineStyle;
+        strokeStyleSelect.dispatchEvent(new Event("change"));
+      });
+    });
     [strokeStyleSelect, strokeWidthSelect, strokeArrowInput, strokeArrowSideSelect].forEach((control) => {
       control.addEventListener("change", applyStrokeControls);
-      swatch.addEventListener("click", () => applyColorToSelection(swatch.dataset.color));
     });
     connectionUpButton.addEventListener("click", () => setConnectionLayer("up"));
     connectionDownButton.addEventListener("click", () => setConnectionLayer("down"));
@@ -4812,7 +4741,6 @@
       snapshot();
       addMissingPointNodes([start, end]);
       connections.push({ from: start, to: end, kind, ...newItemAppearance(true) });
-      connections.push({ from: start, to: end, kind, color: "black" });
       return "added";
     }
 
@@ -4839,7 +4767,7 @@
         return;
       }
       if (result === "invalid-geometry") {
-        announce("Cups and caps need two distinct endpoints on the same row");
+        announce("Cups and caps need two distinct endpoints on the same height");
         connectionSelectionStart = null;
         renderGrid();
         return;
@@ -5020,7 +4948,7 @@
           suppressClickAfterDrag();
           if (width > 0 && height > 0) {
             snapshot();
-            boxes.push({ id: nextBoxId++, x, y, width, height });
+            boxes.push({ id: nextBoxId++, x, y, width, height, ...newItemAppearance() });
             addedBoxIndex = boxes.length - 1;
           } else {
             announce("A box needs nonzero width and height");
@@ -5049,7 +4977,7 @@
         suppressClickAfterDrag();
         if (end === null) {
           announce(kind
-            ? `Connect ${operationDefinitions[kind].label.toLowerCase()} between any two nodes, including shape ports`
+            ? `${operationDefinitions[kind].label}: connect two endpoints${kind === "evaluation" || kind === "coevaluation" ? " at the same height" : ""}, including shape ports`
             : "Connect wires to an operation, point, or shape port");
         } else {
           const result = addConnectionBetweenEndpoints(start, end, kind);
@@ -5058,7 +4986,7 @@
           } else if (result === "duplicate") {
             announce("Those operations are already connected");
           } else if (result === "invalid-geometry") {
-            announce("Cups and caps need two distinct endpoints on the same row");
+            announce("Cups and caps need two distinct endpoints on the same height");
           } else {
             announce(kind ? `${operationDefinitions[kind].label} connected` : "Wire connected");
           }
@@ -5158,7 +5086,7 @@
           return;
         }
         snapshot();
-        circles.push({ id: nextCircleId++, x: column + 0.5, y: row + 0.5, radius: 0.5 });
+        circles.push({ id: nextCircleId++, x: column + 0.5, y: row + 0.5, radius: 0.5, ...newItemAppearance() });
         selectCircle(circles.length - 1);
         updateCount();
         updateActions();
@@ -5197,7 +5125,7 @@
         if (multiplicationSelection.length === 1) {
           const firstSource = endpointFor(multiplicationSelection[0]);
           if (Math.abs(selectedPoint.y - firstSource.y) > 0.001) {
-            announce("Both source nodes must be on the same row");
+            announce("Both source nodes must be on the same height");
             return;
           }
           if (Math.abs(selectedPoint.x - firstSource.x) < 0.001) {
@@ -5238,7 +5166,6 @@
           snapshot();
           addMissingPointNodes([...multiplicationSelection, selectedEndpoint]);
           connections.push({ kind: "multiplication", sources: [...multiplicationSelection], target: selectedEndpoint, ...newItemAppearance() });
-          connections.push({ kind: "multiplication", sources: [...multiplicationSelection], target: selectedEndpoint, color: "black" });
           clearSelection();
           activeInstructions.textContent = multiplicationInstructions;
           announce("Multiplication connected");
@@ -5252,7 +5179,7 @@
         activeInstructions.textContent = multiplicationSelection.length === 1
           ? multiplicationSecondSourceInstructions
           : multiplicationTargetInstructions;
-        announce(multiplicationSelection.length === 1 ? "Select a second source on the same row at a different horizontal position" : "Select the target between the sources on a different row");
+        announce(multiplicationSelection.length === 1 ? "Select a second source on the same height at a different horizontal position" : "Select the target between the sources on a different row");
         renderGrid();
         return;
       }
